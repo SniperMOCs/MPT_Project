@@ -2,12 +2,12 @@
 -- PostgreSQL database dump
 --
 
-\restrict TNGwDYhcXukfFcVdXyzyBxTdYw545LnZyvzF48MrW3UhVnveOli9RmPPjPiJPrG
+\restrict kO4rCcDd5DG1NwPkKGeYtxdEgxiuZmKSpZOtBRnhOzRsHWFeTEMqsixdwSRcf4x
 
 -- Dumped from database version 18.1
 -- Dumped by pg_dump version 18.1
 
--- Started on 2025-12-10 01:50:33
+-- Started on 2025-12-15 02:34:58
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -23,7 +23,7 @@ SET row_security = off;
 
 --
 -- TOC entry 860 (class 1247 OID 16432)
--- Name: content_type_enum; Type: TYPE; Schema: public; Owner: postgres
+-- Name: content_type_enum; Type: TYPE; Schema: public; Owner: -
 --
 
 CREATE TYPE public.content_type_enum AS ENUM (
@@ -33,11 +33,9 @@ CREATE TYPE public.content_type_enum AS ENUM (
 );
 
 
-ALTER TYPE public.content_type_enum OWNER TO postgres;
-
 --
 -- TOC entry 863 (class 1247 OID 16440)
--- Name: notification_type_enum; Type: TYPE; Schema: public; Owner: postgres
+-- Name: notification_type_enum; Type: TYPE; Schema: public; Owner: -
 --
 
 CREATE TYPE public.notification_type_enum AS ENUM (
@@ -48,30 +46,13 @@ CREATE TYPE public.notification_type_enum AS ENUM (
 );
 
 
-ALTER TYPE public.notification_type_enum OWNER TO postgres;
-
 SET default_tablespace = '';
 
 SET default_table_access_method = heap;
 
 --
--- TOC entry 222 (class 1259 OID 16514)
--- Name: chat; Type: TABLE; Schema: public; Owner: postgres
---
-
-CREATE TABLE public.chat (
-    id uuid DEFAULT gen_random_uuid() NOT NULL,
-    title character varying(100),
-    is_group boolean DEFAULT false,
-    created_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP
-);
-
-
-ALTER TABLE public.chat OWNER TO postgres;
-
---
 -- TOC entry 224 (class 1259 OID 16545)
--- Name: chat_message; Type: TABLE; Schema: public; Owner: postgres
+-- Name: chat_message; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.chat_message (
@@ -84,11 +65,9 @@ CREATE TABLE public.chat_message (
 );
 
 
-ALTER TABLE public.chat_message OWNER TO postgres;
-
 --
 -- TOC entry 223 (class 1259 OID 16523)
--- Name: chat_user; Type: TABLE; Schema: public; Owner: postgres
+-- Name: chat_user; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.chat_user (
@@ -99,35 +78,44 @@ CREATE TABLE public.chat_user (
 );
 
 
-ALTER TABLE public.chat_user OWNER TO postgres;
+--
+-- TOC entry 222 (class 1259 OID 16514)
+-- Name: chats; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.chats (
+    id uuid DEFAULT gen_random_uuid() CONSTRAINT chat_id_not_null NOT NULL,
+    title character varying(100),
+    is_group boolean DEFAULT false,
+    created_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP
+);
+
 
 --
 -- TOC entry 221 (class 1259 OID 16485)
--- Name: comment; Type: TABLE; Schema: public; Owner: postgres
+-- Name: comments; Type: TABLE; Schema: public; Owner: -
 --
 
-CREATE TABLE public.comment (
-    id uuid DEFAULT gen_random_uuid() NOT NULL,
-    author_id uuid NOT NULL,
+CREATE TABLE public.comments (
+    id uuid DEFAULT gen_random_uuid() CONSTRAINT comment_id_not_null NOT NULL,
+    author_id uuid CONSTRAINT comment_author_id_not_null NOT NULL,
     parent_id uuid,
-    content_id uuid NOT NULL,
-    text text NOT NULL,
+    content_id uuid CONSTRAINT comment_content_id_not_null NOT NULL,
+    text text CONSTRAINT comment_text_not_null NOT NULL,
     created_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT comment_text_not_empty_check CHECK ((length(TRIM(BOTH FROM text)) > 0))
 );
 
 
-ALTER TABLE public.comment OWNER TO postgres;
-
 --
 -- TOC entry 220 (class 1259 OID 16466)
--- Name: content; Type: TABLE; Schema: public; Owner: postgres
+-- Name: contents; Type: TABLE; Schema: public; Owner: -
 --
 
-CREATE TABLE public.content (
-    id uuid DEFAULT gen_random_uuid() NOT NULL,
-    author_id uuid NOT NULL,
-    content_type public.content_type_enum NOT NULL,
+CREATE TABLE public.contents (
+    id uuid DEFAULT gen_random_uuid() CONSTRAINT content_id_not_null NOT NULL,
+    author_id uuid CONSTRAINT content_author_id_not_null NOT NULL,
+    content_type public.content_type_enum CONSTRAINT content_content_type_not_null NOT NULL,
     description text,
     media_urls text[],
     created_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP,
@@ -136,30 +124,26 @@ CREATE TABLE public.content (
 );
 
 
-ALTER TABLE public.content OWNER TO postgres;
-
 --
 -- TOC entry 226 (class 1259 OID 16590)
--- Name: follow; Type: TABLE; Schema: public; Owner: postgres
+-- Name: follows; Type: TABLE; Schema: public; Owner: -
 --
 
-CREATE TABLE public.follow (
-    id uuid DEFAULT gen_random_uuid() NOT NULL,
-    follower_id uuid NOT NULL,
-    following_id uuid NOT NULL,
+CREATE TABLE public.follows (
+    id uuid DEFAULT gen_random_uuid() CONSTRAINT follow_id_not_null NOT NULL,
+    follower_id uuid CONSTRAINT follow_follower_id_not_null NOT NULL,
+    following_id uuid CONSTRAINT follow_following_id_not_null NOT NULL,
     created_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT no_self_follow_check CHECK ((follower_id <> following_id))
 );
 
 
-ALTER TABLE public.follow OWNER TO postgres;
-
 --
 -- TOC entry 227 (class 1259 OID 16613)
--- Name: like; Type: TABLE; Schema: public; Owner: postgres
+-- Name: likes; Type: TABLE; Schema: public; Owner: -
 --
 
-CREATE TABLE public."like" (
+CREATE TABLE public.likes (
     id uuid DEFAULT gen_random_uuid() CONSTRAINT "Like_id_not_null" NOT NULL,
     user_id uuid CONSTRAINT "Like_user_id_not_null" NOT NULL,
     content_id uuid CONSTRAINT "Like_content_id_not_null" NOT NULL,
@@ -167,34 +151,30 @@ CREATE TABLE public."like" (
 );
 
 
-ALTER TABLE public."like" OWNER TO postgres;
-
 --
 -- TOC entry 225 (class 1259 OID 16569)
--- Name: notification; Type: TABLE; Schema: public; Owner: postgres
+-- Name: notifications; Type: TABLE; Schema: public; Owner: -
 --
 
-CREATE TABLE public.notification (
-    id uuid DEFAULT gen_random_uuid() NOT NULL,
-    user_id uuid NOT NULL,
+CREATE TABLE public.notifications (
+    id uuid DEFAULT gen_random_uuid() CONSTRAINT notification_id_not_null NOT NULL,
+    user_id uuid CONSTRAINT notification_user_id_not_null NOT NULL,
     content_id uuid,
-    notification_type public.notification_type_enum NOT NULL,
+    notification_type public.notification_type_enum CONSTRAINT notification_notification_type_not_null NOT NULL,
     content_type public.content_type_enum,
     created_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP
 );
 
 
-ALTER TABLE public.notification OWNER TO postgres;
-
 --
 -- TOC entry 219 (class 1259 OID 16449)
--- Name: user; Type: TABLE; Schema: public; Owner: postgres
+-- Name: users; Type: TABLE; Schema: public; Owner: -
 --
 
-CREATE TABLE public."user" (
+CREATE TABLE public.users (
     id uuid DEFAULT gen_random_uuid() CONSTRAINT "User_id_not_null" NOT NULL,
     username character varying(50) CONSTRAINT "User_username_not_null" NOT NULL,
-    full_name character varying(100) CONSTRAINT "User_full_name_not_null" NOT NULL,
+    full_name character varying(100),
     password character varying(255) CONSTRAINT "User_password_not_null" NOT NULL,
     avatar_url text,
     created_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP,
@@ -204,47 +184,45 @@ CREATE TABLE public."user" (
 );
 
 
-ALTER TABLE public."user" OWNER TO postgres;
-
 --
 -- TOC entry 4942 (class 2606 OID 16622)
--- Name: like Like_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: likes Like_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY public."like"
+ALTER TABLE ONLY public.likes
     ADD CONSTRAINT "Like_pkey" PRIMARY KEY (id);
 
 
 --
 -- TOC entry 4920 (class 2606 OID 16463)
--- Name: user User_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: users User_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY public."user"
+ALTER TABLE ONLY public.users
     ADD CONSTRAINT "User_pkey" PRIMARY KEY (id);
 
 
 --
 -- TOC entry 4922 (class 2606 OID 16465)
--- Name: user User_username_key; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: users User_username_key; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY public."user"
+ALTER TABLE ONLY public.users
     ADD CONSTRAINT "User_username_key" UNIQUE (username);
 
 
 --
 -- TOC entry 4928 (class 2606 OID 16522)
--- Name: chat chat_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: chats chat_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY public.chat
+ALTER TABLE ONLY public.chats
     ADD CONSTRAINT chat_pkey PRIMARY KEY (id);
 
 
 --
 -- TOC entry 4934 (class 2606 OID 16558)
--- Name: chat_message chatmessage_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: chat_message chatmessage_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.chat_message
@@ -253,7 +231,7 @@ ALTER TABLE ONLY public.chat_message
 
 --
 -- TOC entry 4930 (class 2606 OID 16532)
--- Name: chat_user chatuser_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: chat_user chatuser_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.chat_user
@@ -262,43 +240,43 @@ ALTER TABLE ONLY public.chat_user
 
 --
 -- TOC entry 4926 (class 2606 OID 16498)
--- Name: comment comment_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: comments comment_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY public.comment
+ALTER TABLE ONLY public.comments
     ADD CONSTRAINT comment_pkey PRIMARY KEY (id);
 
 
 --
 -- TOC entry 4924 (class 2606 OID 16479)
--- Name: content content_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: contents content_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY public.content
+ALTER TABLE ONLY public.contents
     ADD CONSTRAINT content_pkey PRIMARY KEY (id);
 
 
 --
 -- TOC entry 4938 (class 2606 OID 16600)
--- Name: follow follow_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: follows follow_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY public.follow
+ALTER TABLE ONLY public.follows
     ADD CONSTRAINT follow_pkey PRIMARY KEY (id);
 
 
 --
 -- TOC entry 4936 (class 2606 OID 16579)
--- Name: notification notification_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: notifications notification_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY public.notification
+ALTER TABLE ONLY public.notifications
     ADD CONSTRAINT notification_pkey PRIMARY KEY (id);
 
 
 --
 -- TOC entry 4932 (class 2606 OID 16534)
--- Name: chat_user unique_chat_user; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: chat_user unique_chat_user; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.chat_user
@@ -307,153 +285,153 @@ ALTER TABLE ONLY public.chat_user
 
 --
 -- TOC entry 4940 (class 2606 OID 16602)
--- Name: follow unique_follow_pair; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: follows unique_follow_pair; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY public.follow
+ALTER TABLE ONLY public.follows
     ADD CONSTRAINT unique_follow_pair UNIQUE (follower_id, following_id);
 
 
 --
 -- TOC entry 4944 (class 2606 OID 16624)
--- Name: like unique_like; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: likes unique_like; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY public."like"
+ALTER TABLE ONLY public.likes
     ADD CONSTRAINT unique_like UNIQUE (user_id, content_id);
 
 
 --
 -- TOC entry 4951 (class 2606 OID 16559)
--- Name: chat_message fk_chatmessage_chat; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: chat_message fk_chatmessage_chat; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.chat_message
-    ADD CONSTRAINT fk_chatmessage_chat FOREIGN KEY (chat_id) REFERENCES public.chat(id) ON DELETE CASCADE;
+    ADD CONSTRAINT fk_chatmessage_chat FOREIGN KEY (chat_id) REFERENCES public.chats(id) ON DELETE CASCADE;
 
 
 --
 -- TOC entry 4952 (class 2606 OID 16564)
--- Name: chat_message fk_chatmessage_sender; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: chat_message fk_chatmessage_sender; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.chat_message
-    ADD CONSTRAINT fk_chatmessage_sender FOREIGN KEY (sender_id) REFERENCES public."user"(id) ON DELETE CASCADE;
+    ADD CONSTRAINT fk_chatmessage_sender FOREIGN KEY (sender_id) REFERENCES public.users(id) ON DELETE CASCADE;
 
 
 --
 -- TOC entry 4949 (class 2606 OID 16535)
--- Name: chat_user fk_chatuser_chat; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: chat_user fk_chatuser_chat; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.chat_user
-    ADD CONSTRAINT fk_chatuser_chat FOREIGN KEY (chat_id) REFERENCES public.chat(id) ON DELETE CASCADE;
+    ADD CONSTRAINT fk_chatuser_chat FOREIGN KEY (chat_id) REFERENCES public.chats(id) ON DELETE CASCADE;
 
 
 --
 -- TOC entry 4950 (class 2606 OID 16540)
--- Name: chat_user fk_chatuser_user; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: chat_user fk_chatuser_user; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.chat_user
-    ADD CONSTRAINT fk_chatuser_user FOREIGN KEY (user_id) REFERENCES public."user"(id) ON DELETE CASCADE;
+    ADD CONSTRAINT fk_chatuser_user FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE CASCADE;
 
 
 --
 -- TOC entry 4946 (class 2606 OID 16499)
--- Name: comment fk_comment_author; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: comments fk_comment_author; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY public.comment
-    ADD CONSTRAINT fk_comment_author FOREIGN KEY (author_id) REFERENCES public."user"(id) ON DELETE CASCADE;
+ALTER TABLE ONLY public.comments
+    ADD CONSTRAINT fk_comment_author FOREIGN KEY (author_id) REFERENCES public.users(id) ON DELETE CASCADE;
 
 
 --
 -- TOC entry 4947 (class 2606 OID 16509)
--- Name: comment fk_comment_content; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: comments fk_comment_content; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY public.comment
-    ADD CONSTRAINT fk_comment_content FOREIGN KEY (content_id) REFERENCES public.content(id) ON DELETE CASCADE;
+ALTER TABLE ONLY public.comments
+    ADD CONSTRAINT fk_comment_content FOREIGN KEY (content_id) REFERENCES public.contents(id) ON DELETE CASCADE;
 
 
 --
 -- TOC entry 4948 (class 2606 OID 16504)
--- Name: comment fk_comment_parent; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: comments fk_comment_parent; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY public.comment
-    ADD CONSTRAINT fk_comment_parent FOREIGN KEY (parent_id) REFERENCES public.comment(id) ON DELETE CASCADE;
+ALTER TABLE ONLY public.comments
+    ADD CONSTRAINT fk_comment_parent FOREIGN KEY (parent_id) REFERENCES public.comments(id) ON DELETE CASCADE;
 
 
 --
 -- TOC entry 4945 (class 2606 OID 16480)
--- Name: content fk_content_author; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: contents fk_content_author; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY public.content
-    ADD CONSTRAINT fk_content_author FOREIGN KEY (author_id) REFERENCES public."user"(id) ON DELETE CASCADE;
+ALTER TABLE ONLY public.contents
+    ADD CONSTRAINT fk_content_author FOREIGN KEY (author_id) REFERENCES public.users(id) ON DELETE CASCADE;
 
 
 --
 -- TOC entry 4955 (class 2606 OID 16603)
--- Name: follow fk_follow_follower; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: follows fk_follow_follower; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY public.follow
-    ADD CONSTRAINT fk_follow_follower FOREIGN KEY (follower_id) REFERENCES public."user"(id) ON DELETE CASCADE;
+ALTER TABLE ONLY public.follows
+    ADD CONSTRAINT fk_follow_follower FOREIGN KEY (follower_id) REFERENCES public.users(id) ON DELETE CASCADE;
 
 
 --
 -- TOC entry 4956 (class 2606 OID 16608)
--- Name: follow fk_follow_following; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: follows fk_follow_following; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY public.follow
-    ADD CONSTRAINT fk_follow_following FOREIGN KEY (following_id) REFERENCES public."user"(id) ON DELETE CASCADE;
+ALTER TABLE ONLY public.follows
+    ADD CONSTRAINT fk_follow_following FOREIGN KEY (following_id) REFERENCES public.users(id) ON DELETE CASCADE;
 
 
 --
 -- TOC entry 4957 (class 2606 OID 16630)
--- Name: like fk_like_content; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: likes fk_like_content; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY public."like"
-    ADD CONSTRAINT fk_like_content FOREIGN KEY (content_id) REFERENCES public.content(id) ON DELETE CASCADE;
+ALTER TABLE ONLY public.likes
+    ADD CONSTRAINT fk_like_content FOREIGN KEY (content_id) REFERENCES public.contents(id) ON DELETE CASCADE;
 
 
 --
 -- TOC entry 4958 (class 2606 OID 16625)
--- Name: like fk_like_user; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: likes fk_like_user; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY public."like"
-    ADD CONSTRAINT fk_like_user FOREIGN KEY (user_id) REFERENCES public."user"(id) ON DELETE CASCADE;
+ALTER TABLE ONLY public.likes
+    ADD CONSTRAINT fk_like_user FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE CASCADE;
 
 
 --
 -- TOC entry 4953 (class 2606 OID 16585)
--- Name: notification fk_notification_content; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: notifications fk_notification_content; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY public.notification
-    ADD CONSTRAINT fk_notification_content FOREIGN KEY (content_id) REFERENCES public.content(id) ON DELETE SET NULL;
+ALTER TABLE ONLY public.notifications
+    ADD CONSTRAINT fk_notification_content FOREIGN KEY (content_id) REFERENCES public.contents(id) ON DELETE SET NULL;
 
 
 --
 -- TOC entry 4954 (class 2606 OID 16580)
--- Name: notification fk_notification_user; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: notifications fk_notification_user; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY public.notification
-    ADD CONSTRAINT fk_notification_user FOREIGN KEY (user_id) REFERENCES public."user"(id) ON DELETE CASCADE;
+ALTER TABLE ONLY public.notifications
+    ADD CONSTRAINT fk_notification_user FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE CASCADE;
 
 
--- Completed on 2025-12-10 01:50:34
+-- Completed on 2025-12-15 02:34:59
 
 --
 -- PostgreSQL database dump complete
 --
 
-\unrestrict TNGwDYhcXukfFcVdXyzyBxTdYw545LnZyvzF48MrW3UhVnveOli9RmPPjPiJPrG
+\unrestrict kO4rCcDd5DG1NwPkKGeYtxdEgxiuZmKSpZOtBRnhOzRsHWFeTEMqsixdwSRcf4x
 

@@ -135,13 +135,7 @@ func (r *userRepository) UpdatePassword(ctx context.Context, id uuid.UUID, passw
 }
 
 func (r *userRepository) UpdateAvatar(ctx context.Context, id uuid.UUID, avatarURL string) error {
-	query := "UPDATE users SET avatar_url = $1 WHERE id = $2"
-	args := []interface{}{}
-
-	if avatarURL != "" {
-		args = append(args, avatarURL)
-	}
-	args = append(args, id)
-	_, err := r.db.ExecContext(ctx, query, args...)
+	query := `UPDATE users SET avatar_url = $1 WHERE id = $2`
+	_, err := r.db.ExecContext(ctx, query, avatarURL, id)
 	return err
 }

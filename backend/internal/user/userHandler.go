@@ -2,7 +2,10 @@ package user
 
 import (
 	"encoding/json"
+	"fmt"
+	"io"
 	"net/http"
+	"os"
 	"strings"
 
 	"github.com/google/uuid"
@@ -166,4 +169,51 @@ func (h *UserHandler) HandleGetByUsername(w http.ResponseWriter, r *http.Request
 	u.Password = ""
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(u)
+}
+
+func (h *UserHandler) HandleUploadAvatar(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		return
+	}
+	userIDstr := r.Context().Value("user_id").(string)
+	userID, err := uuid.Parse(userIDstr)
+	if err != nil {
+		http.Error(w, "invalid user id", http.StatusBadRequest)
+	}
+
+	dir := "./uploads/avatars"
+	if err := os.MkdirAll(dir, os.ModePerm); err != nil {
+		http.Error(w, "cannot create directory", http.StatusInternalServerError)
+		return
+	}
+
+	file, _, err := r.FormFile("file")
+	if err != nil {
+		http.Error(w, "invalid file", http.StatusBadRequest)
+		return
+	}
+	defer file.Close()
+
+	path := fmt.Sprintf("%s/%s.png", dir, userIDstr)
+	out, err := os.Create(path)
+	if err != nil {
+		fmt.Println(err)
+		http.Error(w, "cannot save file", http.StatusInternalServerError)
+		return
+	}
+	defer out.Close()
+
+	_, err = io.Copy(out, file)
+	if err != nil {
+		http.Error(w, "cannot save file", http.StatusInternalServerError)
+		return
+	}
+
+	if err = h.userService.UpdateAvatar(r.Context(), userID, path); err != nil {
+		http.Error(w, "cannot update avatar", http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
 }

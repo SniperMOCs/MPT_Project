@@ -88,3 +88,7 @@ func (s *userService) CheckPassword(u *User, password string) bool {
 		[]byte(password),
 	) == nil
 }
+
+func (s *userService) UpdateAvatar(ctx context.Context, id uuid.UUID, avatarURL string) error {
+	return s.repo.UpdateAvatar(ctx, id, avatarURL)
+}

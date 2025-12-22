@@ -13,4 +13,5 @@ type UserRepository interface {
 	ExistsByUsername(ctx context.Context, username string) (bool, error)
 	Update(ctx context.Context, userID uuid.UUID, dto UserDTO) error
 	UpdatePassword(ctx context.Context, userID uuid.UUID, passwordHash string) error
+	UpdateAvatar(ctx context.Context, id uuid.UUID, avatarURL string) error
 }

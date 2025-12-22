@@ -109,12 +109,6 @@ func (r *userRepository) Update(ctx context.Context, id uuid.UUID, dto UserDTO) 
 		i++
 	}
 
-	if dto.AvatarURL != nil {
-		query += "avatar_url = $" + strconv.Itoa(i) + ", "
-		args = append(args, *dto.AvatarURL)
-		i++
-	}
-
 	if dto.Description != nil {
 		query += "description = $" + strconv.Itoa(i) + ", "
 		args = append(args, *dto.Description)
@@ -137,5 +131,17 @@ func (r *userRepository) UpdatePassword(ctx context.Context, id uuid.UUID, passw
 		UPDATE users SET password = $1 WHERE id = $2
 	`, passwordHash, id)
 
+	return err
+}
+
+func (r *userRepository) UpdateAvatar(ctx context.Context, id uuid.UUID, avatarURL string) error {
+	query := "UPDATE users SET avatar_url = $1 WHERE id = $2"
+	args := []interface{}{}
+
+	if avatarURL != "" {
+		args = append(args, avatarURL)
+	}
+	args = append(args, id)
+	_, err := r.db.ExecContext(ctx, query, args...)
 	return err
 }

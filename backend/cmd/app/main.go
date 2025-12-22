@@ -68,6 +68,7 @@ func main() {
 	mux.Handle("/api/users/me", auth.Middleware(jwtManager, cfg)(http.HandlerFunc(userHandler.HandleMe)))
 	mux.Handle("/api/users/update", auth.Middleware(jwtManager, cfg)(http.HandlerFunc(userHandler.HandleUpdate)))
 	mux.Handle("/api/users/setPassword", auth.Middleware(jwtManager, cfg)(http.HandlerFunc(userHandler.HandleSetPassword)))
+	mux.Handle("/api/users/setAvatar", auth.Middleware(jwtManager, cfg)(http.HandlerFunc(userHandler.HandleUploadAvatar)))
 
 	// Server settings
 	server := &http.Server{

@@ -15,4 +15,5 @@ type UserService interface {
 	UpdatePassword(ctx context.Context, userID uuid.UUID, dto UpdatePasswordDTO) error
 
 	CheckPassword(u *User, password string) bool
+	UpdateAvatar(ctx context.Context, id uuid.UUID, avatarURL string) error
 }

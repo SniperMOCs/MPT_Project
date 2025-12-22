@@ -12,20 +12,13 @@ type UserHandler struct {
 	userService UserService
 }
 
-func NewHandler(userService UserService) *UserHandler {
-	return &UserHandler{userService: userService}
+func NewUserHandler(userService UserService) *UserHandler {
+	return &UserHandler{
+		userService: userService,
+	}
 }
 
-func (h *UserHandler) RegisterRoutes(mux *http.ServeMux) {
-	mux.HandleFunc("/api/users/register", h.handleRegister)
-	mux.HandleFunc("/api/users/me", h.handleMe)
-	mux.HandleFunc("/api/users/update", h.handleUpdate)
-	mux.HandleFunc("/api/users/setPassword", h.handleSetPassword)
-	mux.HandleFunc("/api/users/id/", h.handleGetByID)
-	mux.HandleFunc("/api/users/username/", h.handleGetByUsername)
-}
-
-func (h *UserHandler) handleRegister(w http.ResponseWriter, r *http.Request) {
+func (h *UserHandler) HandleRegister(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		w.WriteHeader(http.StatusMethodNotAllowed)
 		return
@@ -50,16 +43,15 @@ func (h *UserHandler) handleRegister(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusCreated)
 }
 
-func (h *UserHandler) handleMe(w http.ResponseWriter, r *http.Request) {
+func (h *UserHandler) HandleMe(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		w.WriteHeader(http.StatusMethodNotAllowed)
 		return
 	}
 
-	userID, ok := r.Context().Value("userID").(uuid.UUID)
-	if !ok {
-		http.Error(w, "unauthorized", http.StatusUnauthorized)
-		return
+	userID, err := uuid.Parse(r.Context().Value("user_id").(string))
+	if err != nil {
+		http.Error(w, "invalid user id", http.StatusBadRequest)
 	}
 
 	u, err := h.userService.GetByID(r.Context(), userID)
@@ -68,20 +60,20 @@ func (h *UserHandler) handleMe(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	u.Password = ""
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(u)
 }
 
-func (h *UserHandler) handleUpdate(w http.ResponseWriter, r *http.Request) {
+func (h *UserHandler) HandleUpdate(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPatch {
 		w.WriteHeader(http.StatusMethodNotAllowed)
 		return
 	}
 
-	userID, ok := r.Context().Value("userID").(uuid.UUID)
-	if !ok {
-		http.Error(w, "unauthorized", http.StatusUnauthorized)
-		return
+	userID, err := uuid.Parse(r.Context().Value("user_id").(string))
+	if err != nil {
+		http.Error(w, "invalid user id", http.StatusBadRequest)
 	}
 
 	var dto UserDTO
@@ -98,16 +90,15 @@ func (h *UserHandler) handleUpdate(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 }
 
-func (h *UserHandler) handleSetPassword(w http.ResponseWriter, r *http.Request) {
+func (h *UserHandler) HandleSetPassword(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPatch {
 		w.WriteHeader(http.StatusMethodNotAllowed)
 		return
 	}
 
-	userID, ok := r.Context().Value("userID").(uuid.UUID)
-	if !ok {
-		http.Error(w, "unauthorized", http.StatusUnauthorized)
-		return
+	userID, err := uuid.Parse(r.Context().Value("user_id").(string))
+	if err != nil {
+		http.Error(w, "invalid user id", http.StatusBadRequest)
 	}
 
 	var dto UpdatePasswordDTO
@@ -129,7 +120,7 @@ func (h *UserHandler) handleSetPassword(w http.ResponseWriter, r *http.Request) 
 	w.WriteHeader(http.StatusNoContent)
 }
 
-func (h *UserHandler) handleGetByID(w http.ResponseWriter, r *http.Request) {
+func (h *UserHandler) HandleGetByID(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		w.WriteHeader(http.StatusMethodNotAllowed)
 		return
@@ -148,11 +139,12 @@ func (h *UserHandler) handleGetByID(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	u.Password = ""
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(u)
 }
 
-func (h *UserHandler) handleGetByUsername(w http.ResponseWriter, r *http.Request) {
+func (h *UserHandler) HandleGetByUsername(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		w.WriteHeader(http.StatusMethodNotAllowed)
 		return
@@ -171,6 +163,7 @@ func (h *UserHandler) handleGetByUsername(w http.ResponseWriter, r *http.Request
 		return
 	}
 
+	u.Password = ""
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(u)
 }

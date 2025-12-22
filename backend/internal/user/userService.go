@@ -72,7 +72,7 @@ func (s *userService) UpdatePassword(ctx context.Context, id uuid.UUID, dto Upda
 	}
 
 	hash, err := bcrypt.GenerateFromPassword(
-		[]byte(u.Password),
+		[]byte(dto.NewPassword),
 		bcrypt.DefaultCost,
 	)
 	if err != nil {

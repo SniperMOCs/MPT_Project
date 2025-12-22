@@ -9,6 +9,7 @@ import (
 	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
 
+	"github.com/SniperMOCs/MPT_Project/internal/auth"
 	"github.com/SniperMOCs/MPT_Project/internal/config"
 	"github.com/SniperMOCs/MPT_Project/internal/user"
 )
@@ -45,13 +46,28 @@ func main() {
 	// User
 	userRepo := user.NewUserRepository(db)
 	userService := user.NewUserService(userRepo)
-	userHandler := user.NewHandler(userService)
+	userHandler := user.NewUserHandler(userService)
+
+	// Auth
+	jwtManager := auth.NewJWTManager([]byte(cfg.JwtSecret))
+	authService := auth.NewAuthService(
+		userService,
+		jwtManager,
+		cfg,
+	)
+	authHandler := auth.NewAuthHandler(authService)
 
 	// HTTP mux
 	mux := http.NewServeMux()
 
 	// Route register
-	userHandler.RegisterRoutes(mux)
+	mux.HandleFunc("/api/users/login", authHandler.Login)
+	mux.HandleFunc("/api/users/register", userHandler.HandleRegister)
+	mux.HandleFunc("/api/users/id/", userHandler.HandleGetByID)
+	mux.HandleFunc("/api/users/username/", userHandler.HandleGetByUsername)
+	mux.Handle("/api/users/me", auth.Middleware(jwtManager, cfg)(http.HandlerFunc(userHandler.HandleMe)))
+	mux.Handle("/api/users/update", auth.Middleware(jwtManager, cfg)(http.HandlerFunc(userHandler.HandleUpdate)))
+	mux.Handle("/api/users/setPassword", auth.Middleware(jwtManager, cfg)(http.HandlerFunc(userHandler.HandleSetPassword)))
 
 	// Server settings
 	server := &http.Server{

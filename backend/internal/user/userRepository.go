@@ -36,13 +36,14 @@ func (r *userRepository) GetByID(ctx context.Context, id uuid.UUID) (*User, erro
 	var u User
 
 	row := r.db.QueryRow(`
-		SELECT id, username, full_name, avatar_url, description, created_at
+		SELECT id, username, password, full_name, avatar_url, description, created_at
 		FROM users WHERE id=$1
 	`, id)
 
 	err := row.Scan(
 		&u.ID,
 		&u.Username,
+		&u.Password,
 		&u.FullName,
 		&u.AvatarURL,
 		&u.Description,
@@ -60,13 +61,14 @@ func (r *userRepository) GetByUsername(ctx context.Context, username string) (*U
 	var u User
 
 	row := r.db.QueryRowContext(ctx, `
-		SELECT id, username, full_name, avatar_url, description, created_at
+		SELECT id, username, password, full_name, avatar_url, description, created_at
 		FROM users WHERE username=$1
 	`, username)
 
 	err := row.Scan(
 		&u.ID,
 		&u.Username,
+		&u.Password,
 		&u.FullName,
 		&u.AvatarURL,
 		&u.Description,
@@ -122,8 +124,7 @@ func (r *userRepository) Update(ctx context.Context, id uuid.UUID, dto UserDTO) 
 	if len(args) == 0 {
 		return nil
 	}
-
-	query = strings.TrimSuffix(query, ",")
+	query = strings.TrimSuffix(query, ", ")
 	query += " WHERE id = $" + strconv.Itoa(i)
 	args = append(args, id)
 

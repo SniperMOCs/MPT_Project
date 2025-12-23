@@ -11,6 +11,7 @@ import (
 
 	"github.com/SniperMOCs/MPT_Project/internal/auth"
 	"github.com/SniperMOCs/MPT_Project/internal/config"
+	"github.com/SniperMOCs/MPT_Project/internal/content"
 	"github.com/SniperMOCs/MPT_Project/internal/user"
 )
 
@@ -57,10 +58,16 @@ func main() {
 	)
 	authHandler := auth.NewAuthHandler(authService)
 
+	// Content
+	contentRepo := content.NewContentRepository(db)
+	contentService := content.NewContentService(contentRepo)
+	contentHandler := content.NewContentHandler(contentService)
+
 	// HTTP mux
 	mux := http.NewServeMux()
 
 	// Route register
+	// USERS
 	mux.HandleFunc("/api/users/login", authHandler.Login)
 	mux.HandleFunc("/api/users/register", userHandler.HandleRegister)
 	mux.HandleFunc("/api/users/id/", userHandler.HandleGetByID)
@@ -69,6 +76,18 @@ func main() {
 	mux.Handle("/api/users/update", auth.Middleware(jwtManager, cfg)(http.HandlerFunc(userHandler.HandleUpdate)))
 	mux.Handle("/api/users/setPassword", auth.Middleware(jwtManager, cfg)(http.HandlerFunc(userHandler.HandleSetPassword)))
 	mux.Handle("/api/users/setAvatar", auth.Middleware(jwtManager, cfg)(http.HandlerFunc(userHandler.HandleUploadAvatar)))
+
+	// CONTENT
+	mux.HandleFunc("/api/content/{id}", contentHandler.GetByID)
+	mux.HandleFunc("/api/content/user/{id}", contentHandler.GetByAuthorAndType)
+	mux.HandleFunc("/api/content", contentHandler.GetByType)
+	mux.Handle("/api/content/create/", auth.Middleware(jwtManager, cfg)(http.HandlerFunc(contentHandler.Create)))
+	mux.Handle("/api/content/delete/{id}", auth.Middleware(jwtManager, cfg)(http.HandlerFunc(contentHandler.Delete)))
+	mux.Handle("/api/content/update/{id}", auth.Middleware(jwtManager, cfg)(http.HandlerFunc(contentHandler.Update)))
+	mux.Handle("/api/content/media/{id}", auth.Middleware(jwtManager, cfg)(http.HandlerFunc(contentHandler.UploadMedia)))
+
+	// STATIC
+	mux.Handle("/uploads/", http.StripPrefix("/uploads/", http.FileServer(http.Dir("./uploads"))))
 
 	// Server settings
 	server := &http.Server{

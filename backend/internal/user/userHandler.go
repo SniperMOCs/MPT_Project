@@ -90,7 +90,7 @@ func (h *UserHandler) HandleUpdate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.WriteHeader(http.StatusNoContent)
+	w.WriteHeader(http.StatusOK)
 }
 
 func (h *UserHandler) HandleSetPassword(w http.ResponseWriter, r *http.Request) {

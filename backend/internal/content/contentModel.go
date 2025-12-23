@@ -15,11 +15,11 @@ const (
 )
 
 type Content struct {
-	ID          uuid.UUID
-	AuthorId    uuid.UUID
-	ContentType ContentType
-	Description string
-	MediaURLs   []string
-	CreatedAt   time.Time
-	IsVisible   bool
+	ID          uuid.UUID   `json:"id"`
+	AuthorId    uuid.UUID   `json:"author_id"`
+	ContentType ContentType `json:"content_type"`
+	Description string      `json:"description"`
+	MediaURLs   []string    `json:"media_urls"`
+	CreatedAt   time.Time   `json:"created_at"`
+	IsVisible   bool        `json:"is_visible"`
 }

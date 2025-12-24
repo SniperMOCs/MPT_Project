@@ -31,12 +31,7 @@ func (h *ContentHandler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if dto.ContentType == "" {
-		http.Error(w, "content_type requiered", http.StatusBadRequest)
-		return
-	}
-
-	if err := h.contentService.Create(r.Context(), dto, userID); err != nil {
+	if err := h.contentService.Create(r.Context(), dto.ContentType, dto.Description, userID); err != nil {
 		http.Error(w, "cannot create content", http.StatusInternalServerError)
 		return
 	}
@@ -165,7 +160,7 @@ func (h *ContentHandler) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := h.contentService.Update(r.Context(), dto, id, userID); err != nil {
+	if err := h.contentService.Update(r.Context(), dto.Description, dto.IsVisible, &dto.MediaURLs, id, userID); err != nil {
 		http.Error(w, "cannot update content", http.StatusInternalServerError)
 		return
 	}
@@ -181,14 +176,8 @@ func (h *ContentHandler) UploadMedia(w http.ResponseWriter, r *http.Request) {
 
 	userID := r.Context().Value(contextkeys.UserIDKey).(uuid.UUID)
 
-	// /api/content/media/{id}
-	url_parts := strings.Split(r.URL.Path, "/")
-	if len(url_parts) < 5 {
-		http.Error(w, "invalid path", http.StatusBadRequest)
-		return
-	}
-
-	contentId, err := uuid.Parse(url_parts[4])
+	idStr := strings.TrimPrefix(r.URL.Path, "/api/content/media/")
+	contentId, err := uuid.Parse(idStr)
 	if err != nil {
 		http.Error(w, "invalid content id", http.StatusBadRequest)
 		return

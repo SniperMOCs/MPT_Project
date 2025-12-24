@@ -2,10 +2,7 @@ package user
 
 import (
 	"encoding/json"
-	"fmt"
-	"io"
 	"net/http"
-	"os"
 	"strings"
 
 	contextkeys "github.com/SniperMOCs/MPT_Project/internal/contextKeys"
@@ -34,13 +31,8 @@ func (h *UserHandler) HandleRegister(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if u.Username == " " || u.Password == " " {
-		http.Error(w, "username and password requiered", http.StatusBadRequest)
-		return
-	}
-
 	if err := h.userService.Create(r.Context(), &u); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		http.Error(w, "cannot create user", http.StatusBadRequest)
 		return
 	}
 
@@ -80,7 +72,7 @@ func (h *UserHandler) HandleUpdate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := h.userService.Update(r.Context(), userID, dto); err != nil {
+	if err := h.userService.Update(r.Context(), userID, dto.Username, dto.FullName, dto.Description); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
@@ -102,12 +94,7 @@ func (h *UserHandler) HandleSetPassword(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	if dto.OldPassword == "" || dto.NewPassword == "" {
-		http.Error(w, "both passwords requiered", http.StatusBadRequest)
-		return
-	}
-
-	if err := h.userService.UpdatePassword(r.Context(), userID, dto); err != nil {
+	if err := h.userService.UpdatePassword(r.Context(), userID, dto.OldPassword, dto.NewPassword); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
@@ -168,17 +155,7 @@ func (h *UserHandler) HandleUploadAvatar(w http.ResponseWriter, r *http.Request)
 		w.WriteHeader(http.StatusMethodNotAllowed)
 		return
 	}
-	userID, err := uuid.Parse(r.Context().Value(contextkeys.UserIDKey).(string))
-	if err != nil {
-		http.Error(w, "invalid user id", http.StatusBadRequest)
-		return
-	}
-
-	dir := "./uploads/avatars"
-	if err := os.MkdirAll(dir, os.ModePerm); err != nil {
-		http.Error(w, "cannot create directory", http.StatusInternalServerError)
-		return
-	}
+	userID := r.Context().Value(contextkeys.UserIDKey).(uuid.UUID)
 
 	file, _, err := r.FormFile("file")
 	if err != nil {
@@ -187,22 +164,7 @@ func (h *UserHandler) HandleUploadAvatar(w http.ResponseWriter, r *http.Request)
 	}
 	defer file.Close()
 
-	path := fmt.Sprintf("%s/%s.png", dir, userID.String())
-	out, err := os.Create(path)
-	if err != nil {
-		fmt.Println(err)
-		http.Error(w, "cannot save file", http.StatusInternalServerError)
-		return
-	}
-	defer out.Close()
-
-	_, err = io.Copy(out, file)
-	if err != nil {
-		http.Error(w, "cannot save file", http.StatusInternalServerError)
-		return
-	}
-
-	if err = h.userService.UpdateAvatar(r.Context(), userID, path); err != nil {
+	if err = h.userService.UpdateAvatar(r.Context(), userID, file); err != nil {
 		http.Error(w, "cannot update avatar", http.StatusInternalServerError)
 		return
 	}

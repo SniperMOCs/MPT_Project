@@ -92,26 +92,26 @@ func (r *userRepository) ExistsByUsername(ctx context.Context, username string) 
 	return exists, err
 }
 
-func (r *userRepository) Update(ctx context.Context, id uuid.UUID, dto UserDTO) error {
+func (r *userRepository) Update(ctx context.Context, id uuid.UUID, username string, fullname string, description string) error {
 	query := "UPDATE users SET "
 	args := []interface{}{}
 	i := 1
 
-	if dto.Username != nil {
+	if username != "" {
 		query += "username = $" + strconv.Itoa(i) + ", "
-		args = append(args, *dto.Username)
+		args = append(args, username)
 		i++
 	}
 
-	if dto.FullName != nil {
+	if fullname != "" {
 		query += "full_name = $" + strconv.Itoa(i) + ", "
-		args = append(args, *dto.FullName)
+		args = append(args, fullname)
 		i++
 	}
 
-	if dto.Description != nil {
+	if description != "" {
 		query += "description = $" + strconv.Itoa(i) + ", "
-		args = append(args, *dto.Description)
+		args = append(args, description)
 		i++
 	}
 

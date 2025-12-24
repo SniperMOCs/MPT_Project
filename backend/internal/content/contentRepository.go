@@ -156,26 +156,26 @@ func (r *contentRepository) Delete(ctx context.Context, id uuid.UUID) error {
 	return nil
 }
 
-func (r *contentRepository) Update(ctx context.Context, dto UpdatePostDTO, id uuid.UUID) error {
+func (r *contentRepository) Update(ctx context.Context, description *string, isVisible *bool, mediaURLs *[]string, id uuid.UUID) error {
 	query := "UPDATE contents SET "
 	args := []any{}
 	i := 1
 
-	if dto.IsVisible != nil {
+	if isVisible != nil {
 		query += "is_visible = $" + strconv.Itoa(i) + ", "
-		args = append(args, *dto.IsVisible)
+		args = append(args, isVisible)
 		i++
 	}
 
-	if dto.Description != nil {
+	if description != nil {
 		query += "description = $" + strconv.Itoa(i) + ", "
-		args = append(args, *dto.Description)
+		args = append(args, description)
 		i++
 	}
 
-	if dto.MediaURLs != nil {
+	if mediaURLs != nil {
 		query += "media_urls = $" + strconv.Itoa(i) + ", "
-		args = append(args, pq.Array(dto.MediaURLs))
+		args = append(args, pq.Array(mediaURLs))
 		i++
 	}
 

@@ -10,6 +10,7 @@ import (
 	_ "github.com/lib/pq"
 
 	"github.com/SniperMOCs/MPT_Project/internal/auth"
+	"github.com/SniperMOCs/MPT_Project/internal/comment"
 	"github.com/SniperMOCs/MPT_Project/internal/config"
 	"github.com/SniperMOCs/MPT_Project/internal/content"
 	"github.com/SniperMOCs/MPT_Project/internal/follow"
@@ -75,6 +76,11 @@ func main() {
 	likeService := like.NewLikeService(likeRepo)
 	likeHandler := like.NewLikeHandler(likeService)
 
+	// Comments
+	commentRepo := comment.NewCommentRepository(db)
+	commentService := comment.NewCommentService(commentRepo)
+	commentHandler := comment.NewCommentHandler(commentService)
+
 	// HTTP mux
 	mux := http.NewServeMux()
 
@@ -111,6 +117,11 @@ func main() {
 	mux.Handle("/api/liked/{id}", auth.Middleware(jwtManager, cfg)(http.HandlerFunc(likeHandler.Exists)))
 	mux.Handle("/api/like/{id}", auth.Middleware(jwtManager, cfg)(http.HandlerFunc(likeHandler.Create)))
 	mux.Handle("/api/unlike/{id}", auth.Middleware(jwtManager, cfg)(http.HandlerFunc(likeHandler.Delete)))
+
+	// COMMENT
+	mux.HandleFunc("/api/comment/content/{id}", commentHandler.GetByContentId)
+	mux.Handle("/api/comment", auth.Middleware(jwtManager, cfg)(http.HandlerFunc(commentHandler.Create)))
+	mux.Handle("/api/comment/delete/{id}", auth.Middleware(jwtManager, cfg)(http.HandlerFunc(commentHandler.Delete)))
 
 	// STATIC
 	mux.Handle("/uploads/", http.StripPrefix("/uploads/", http.FileServer(http.Dir("./uploads"))))

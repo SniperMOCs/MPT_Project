@@ -35,5 +35,5 @@ func (s *authService) Login(ctx context.Context, username string, password strin
 		return "", errors.New("invalid credentials")
 	}
 
-	return s.jwt.GenerateToken(u.ID.String(), s.cfg.TokenTTL)
+	return s.jwt.GenerateToken(u.ID, s.cfg.TokenTTL)
 }

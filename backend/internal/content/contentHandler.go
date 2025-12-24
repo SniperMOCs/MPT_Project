@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"strings"
 
+	contextkeys "github.com/SniperMOCs/MPT_Project/internal/contextKeys"
 	"github.com/google/uuid"
 )
 
@@ -22,11 +23,7 @@ func (h *ContentHandler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userID, err := uuid.Parse(r.Context().Value("user_id").(string))
-	if err != nil {
-		http.Error(w, "invalid user id", http.StatusBadRequest)
-		return
-	}
+	userID := r.Context().Value(contextkeys.UserIDKey).(uuid.UUID)
 
 	var dto ContentDTO
 	if err := json.NewDecoder(r.Body).Decode(&dto); err != nil {
@@ -130,10 +127,7 @@ func (h *ContentHandler) Delete(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userID, err := uuid.Parse(r.Context().Value("user_id").(string))
-	if err != nil {
-		http.Error(w, "invalid user id", http.StatusBadRequest)
-	}
+	userID := r.Context().Value(contextkeys.UserIDKey).(uuid.UUID)
 
 	idStr := strings.TrimPrefix(r.URL.Path, "/api/content/delete/")
 	id, err := uuid.Parse(idStr)
@@ -156,10 +150,7 @@ func (h *ContentHandler) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userID, err := uuid.Parse(r.Context().Value("user_id").(string))
-	if err != nil {
-		http.Error(w, "invalid user id", http.StatusBadRequest)
-	}
+	userID := r.Context().Value(contextkeys.UserIDKey).(uuid.UUID)
 
 	idStr := strings.TrimPrefix(r.URL.Path, "/api/content/update/")
 	id, err := uuid.Parse(idStr)
@@ -175,7 +166,7 @@ func (h *ContentHandler) Update(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := h.contentService.Update(r.Context(), dto, id, userID); err != nil {
-		http.Error(w, "cannot update content", http.StatusBadRequest)
+		http.Error(w, "cannot update content", http.StatusInternalServerError)
 		return
 	}
 
@@ -188,11 +179,7 @@ func (h *ContentHandler) UploadMedia(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userID, err := uuid.Parse(r.Context().Value("user_id").(string))
-	if err != nil {
-		http.Error(w, "invalid user id", http.StatusBadRequest)
-		return
-	}
+	userID := r.Context().Value(contextkeys.UserIDKey).(uuid.UUID)
 
 	// /api/content/media/{id}
 	url_parts := strings.Split(r.URL.Path, "/")

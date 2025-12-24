@@ -8,6 +8,7 @@ import (
 	"os"
 	"strings"
 
+	contextkeys "github.com/SniperMOCs/MPT_Project/internal/contextKeys"
 	"github.com/google/uuid"
 )
 
@@ -52,10 +53,7 @@ func (h *UserHandler) HandleMe(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userID, err := uuid.Parse(r.Context().Value("user_id").(string))
-	if err != nil {
-		http.Error(w, "invalid user id", http.StatusBadRequest)
-	}
+	userID := r.Context().Value(contextkeys.UserIDKey).(uuid.UUID)
 
 	u, err := h.userService.GetByID(r.Context(), userID)
 	if err != nil {
@@ -74,10 +72,7 @@ func (h *UserHandler) HandleUpdate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userID, err := uuid.Parse(r.Context().Value("user_id").(string))
-	if err != nil {
-		http.Error(w, "invalid user id", http.StatusBadRequest)
-	}
+	userID := r.Context().Value(contextkeys.UserIDKey).(uuid.UUID)
 
 	var dto UserDTO
 	if err := json.NewDecoder(r.Body).Decode(&dto); err != nil {
@@ -99,10 +94,7 @@ func (h *UserHandler) HandleSetPassword(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	userID, err := uuid.Parse(r.Context().Value("user_id").(string))
-	if err != nil {
-		http.Error(w, "invalid user id", http.StatusBadRequest)
-	}
+	userID := r.Context().Value(contextkeys.UserIDKey).(uuid.UUID)
 
 	var dto UpdatePasswordDTO
 	if err := json.NewDecoder(r.Body).Decode(&dto); err != nil {
@@ -176,10 +168,10 @@ func (h *UserHandler) HandleUploadAvatar(w http.ResponseWriter, r *http.Request)
 		w.WriteHeader(http.StatusMethodNotAllowed)
 		return
 	}
-	userIDstr := r.Context().Value("user_id").(string)
-	userID, err := uuid.Parse(userIDstr)
+	userID, err := uuid.Parse(r.Context().Value(contextkeys.UserIDKey).(string))
 	if err != nil {
 		http.Error(w, "invalid user id", http.StatusBadRequest)
+		return
 	}
 
 	dir := "./uploads/avatars"
@@ -195,7 +187,7 @@ func (h *UserHandler) HandleUploadAvatar(w http.ResponseWriter, r *http.Request)
 	}
 	defer file.Close()
 
-	path := fmt.Sprintf("%s/%s.png", dir, userIDstr)
+	path := fmt.Sprintf("%s/%s.png", dir, userID.String())
 	out, err := os.Create(path)
 	if err != nil {
 		fmt.Println(err)

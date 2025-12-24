@@ -13,6 +13,7 @@ import (
 	"github.com/SniperMOCs/MPT_Project/internal/config"
 	"github.com/SniperMOCs/MPT_Project/internal/content"
 	"github.com/SniperMOCs/MPT_Project/internal/follow"
+	"github.com/SniperMOCs/MPT_Project/internal/like"
 	"github.com/SniperMOCs/MPT_Project/internal/user"
 )
 
@@ -69,6 +70,11 @@ func main() {
 	followService := follow.NewFollowService(followRepo)
 	followHandler := follow.NewFollowHandler(followService)
 
+	// Likes
+	likeRepo := like.NewLikeRepository(db)
+	likeService := like.NewLikeService(likeRepo)
+	likeHandler := like.NewLikeHandler(likeService)
+
 	// HTTP mux
 	mux := http.NewServeMux()
 
@@ -92,13 +98,19 @@ func main() {
 	mux.Handle("/api/content/update/{id}", auth.Middleware(jwtManager, cfg)(http.HandlerFunc(contentHandler.Update)))
 	mux.Handle("/api/content/media/{id}", auth.Middleware(jwtManager, cfg)(http.HandlerFunc(contentHandler.UploadMedia)))
 
-	//FOLLOW
+	// FOLLOW
 	mux.HandleFunc("/api/followers/{id}", followHandler.GetFollowers)
 	mux.HandleFunc("/api/following/{id}", followHandler.GetFollowing)
 	mux.HandleFunc("/api/follow/info/{id}", followHandler.FollowInfo)
 	mux.Handle("/api/follower/{id}", auth.Middleware(jwtManager, cfg)(http.HandlerFunc(followHandler.IsFollower)))
 	mux.Handle("/api/follow/{id}", auth.Middleware(jwtManager, cfg)(http.HandlerFunc(followHandler.Create)))
 	mux.Handle("/api/unfollow/{id}", auth.Middleware(jwtManager, cfg)(http.HandlerFunc(followHandler.Delete)))
+
+	// LIKE
+	mux.HandleFunc("/api/likes/{id}", likeHandler.GetLikesCount)
+	mux.Handle("/api/liked/{id}", auth.Middleware(jwtManager, cfg)(http.HandlerFunc(likeHandler.Exists)))
+	mux.Handle("/api/like/{id}", auth.Middleware(jwtManager, cfg)(http.HandlerFunc(likeHandler.Create)))
+	mux.Handle("/api/unlike/{id}", auth.Middleware(jwtManager, cfg)(http.HandlerFunc(likeHandler.Delete)))
 
 	// STATIC
 	mux.Handle("/uploads/", http.StripPrefix("/uploads/", http.FileServer(http.Dir("./uploads"))))

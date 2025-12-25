@@ -13,6 +13,7 @@ import (
 	"github.com/SniperMOCs/MPT_Project/internal/comment"
 	"github.com/SniperMOCs/MPT_Project/internal/config"
 	"github.com/SniperMOCs/MPT_Project/internal/content"
+	"github.com/SniperMOCs/MPT_Project/internal/cors"
 	"github.com/SniperMOCs/MPT_Project/internal/follow"
 	"github.com/SniperMOCs/MPT_Project/internal/like"
 	"github.com/SniperMOCs/MPT_Project/internal/notification"
@@ -139,10 +140,12 @@ func main() {
 
 	// WEBSOCKET
 	mux.Handle("/ws/notifications", auth.Middleware(jwtManager, cfg)(http.HandlerFunc(notificationHandler.ServeWS)))
+
+	corsMux := cors.CORSHandler(mux)
 	// Server settings
 	server := &http.Server{
 		Addr:         ":8080",
-		Handler:      mux,
+		Handler:      corsMux,
 		ReadTimeout:  5 * time.Second,
 		WriteTimeout: 10 * time.Second,
 		IdleTimeout:  60 * time.Second,

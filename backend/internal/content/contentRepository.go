@@ -20,15 +20,14 @@ func NewContentRepository(db *sql.DB) ContentRepository {
 
 func (r *contentRepository) Create(ctx context.Context, c *Content) error {
 	query := `
-		INSERT INTO contents (id, author_id, content_type, description, media_urls, created_at, is_visible)
-		VALUES($1, $2, $3, $4, $5, $6, $7)	
+		INSERT INTO contents (id, author_id, description, media_urls, created_at, is_visible)
+		VALUES($1, $2, $3, $4, $5, $6)	
 	`
 	_, err := r.db.ExecContext(
 		ctx,
 		query,
 		c.ID,
 		c.AuthorId,
-		c.ContentType,
 		c.Description,
 		pq.Array(c.MediaURLs),
 		c.CreatedAt,
@@ -39,7 +38,7 @@ func (r *contentRepository) Create(ctx context.Context, c *Content) error {
 
 func (r *contentRepository) GetByID(ctx context.Context, id uuid.UUID) (*Content, error) {
 	row := r.db.QueryRowContext(ctx, `
-		SELECT id, author_id, content_type, description, media_urls, created_at, is_visible
+		SELECT id, author_id, description, media_urls, created_at, is_visible
 		FROM contents WHERE id=$1
 	`, id)
 
@@ -48,7 +47,6 @@ func (r *contentRepository) GetByID(ctx context.Context, id uuid.UUID) (*Content
 	err := row.Scan(
 		&c.ID,
 		&c.AuthorId,
-		&c.ContentType,
 		&c.Description,
 		pq.Array(&c.MediaURLs),
 		&c.CreatedAt,
@@ -62,15 +60,15 @@ func (r *contentRepository) GetByID(ctx context.Context, id uuid.UUID) (*Content
 	return &c, nil
 }
 
-func (r *contentRepository) GetByType(ctx context.Context, ct ContentType) ([]Content, error) {
+func (r *contentRepository) GetByAuthor(ctx context.Context, authorId uuid.UUID) ([]Content, error) {
 	query := `
-		SELECT id, author_id, content_type, description, media_urls, created_at, is_visible
+		SELECT id, author_id, description, media_urls, created_at, is_visible
 		FROM contents
-		WHERE content_type = $1 AND is_visible = true
+		WHERE author_id = $1
 		ORDER BY created_at DESC
 	`
 
-	rows, err := r.db.QueryContext(ctx, query, ct)
+	rows, err := r.db.QueryContext(ctx, query, authorId)
 	if err != nil {
 		return nil, err
 	}
@@ -83,43 +81,6 @@ func (r *contentRepository) GetByType(ctx context.Context, ct ContentType) ([]Co
 		if err := rows.Scan(
 			&c.ID,
 			&c.AuthorId,
-			&c.ContentType,
-			&c.Description,
-			pq.Array(&c.MediaURLs),
-			&c.CreatedAt,
-			&c.IsVisible,
-		); err != nil {
-			return nil, err
-		}
-
-		res = append(res, c)
-	}
-
-	return res, nil
-}
-
-func (r *contentRepository) GetByAuthorAndType(ctx context.Context, authorId uuid.UUID, ct ContentType) ([]Content, error) {
-	query := `
-		SELECT id, author_id, content_type, description, media_urls, created_at, is_visible
-		FROM contents
-		WHERE content_type = $1 AND author_id = $2
-		ORDER BY created_at DESC
-	`
-
-	rows, err := r.db.QueryContext(ctx, query, ct, authorId)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-
-	var res []Content
-	for rows.Next() {
-		var c Content
-
-		if err := rows.Scan(
-			&c.ID,
-			&c.AuthorId,
-			&c.ContentType,
 			&c.Description,
 			pq.Array(&c.MediaURLs),
 			&c.CreatedAt,

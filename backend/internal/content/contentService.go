@@ -22,11 +22,10 @@ func NewContentService(repo ContentRepository) ContentService {
 	}
 }
 
-func (s *contentService) Create(ctx context.Context, contentType ContentType, description string, authorId uuid.UUID) error {
+func (s *contentService) Create(ctx context.Context, description string, authorId uuid.UUID) error {
 	content := &Content{
 		ID:          uuid.New(),
 		AuthorId:    authorId,
-		ContentType: contentType,
 		Description: description,
 		MediaURLs:   []string{},
 		CreatedAt:   time.Now(),
@@ -39,12 +38,8 @@ func (s *contentService) GetByID(ctx context.Context, id uuid.UUID) (*Content, e
 	return s.repo.GetByID(ctx, id)
 }
 
-func (s *contentService) GetByType(ctx context.Context, ct ContentType) ([]Content, error) {
-	return s.repo.GetByType(ctx, ct)
-}
-
-func (s *contentService) GetByAuthorAndType(ctx context.Context, authorId uuid.UUID, ct ContentType) ([]Content, error) {
-	return s.repo.GetByAuthorAndType(ctx, authorId, ct)
+func (s *contentService) GetByAuthor(ctx context.Context, authorId uuid.UUID) ([]Content, error) {
+	return s.repo.GetByAuthor(ctx, authorId)
 }
 
 func (s *contentService) Delete(ctx context.Context, id uuid.UUID, userId uuid.UUID) error {

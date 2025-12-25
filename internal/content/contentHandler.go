@@ -107,7 +107,7 @@ func (h *ContentHandler) Delete(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *ContentHandler) Update(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPut {
+	if r.Method != http.MethodPatch {
 		w.WriteHeader(http.StatusMethodNotAllowed)
 		return
 	}

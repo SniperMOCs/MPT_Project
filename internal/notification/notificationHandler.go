@@ -59,7 +59,7 @@ func (h *NotificationHandler) GetMy(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *NotificationHandler) MarkAsRead(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPut {
+	if r.Method != http.MethodPatch {
 		w.WriteHeader(http.StatusMethodNotAllowed)
 		return
 	}

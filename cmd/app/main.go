@@ -141,7 +141,9 @@ func main() {
 	// WEBSOCKET
 	mux.Handle("/ws/notifications", auth.Middleware(jwtManager, cfg)(http.HandlerFunc(notificationHandler.ServeWS)))
 
+	// Middleware
 	corsMux := cors.CORSHandler(mux)
+
 	// Server settings
 	server := &http.Server{
 		Addr:         ":8080",

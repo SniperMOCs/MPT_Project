@@ -15,6 +15,7 @@ import (
 	"github.com/SniperMOCs/MPT_Project/internal/content"
 	"github.com/SniperMOCs/MPT_Project/internal/follow"
 	"github.com/SniperMOCs/MPT_Project/internal/like"
+	"github.com/SniperMOCs/MPT_Project/internal/notification"
 	"github.com/SniperMOCs/MPT_Project/internal/user"
 )
 
@@ -61,6 +62,12 @@ func main() {
 	)
 	authHandler := auth.NewAuthHandler(authService)
 
+	// Notification
+	notificationRepo := notification.NewNotificationRepository(db)
+	hub := notification.NewWebSocketHub()
+	notificationService := notification.NewNotificationService(notificationRepo, hub)
+	notificationHandler := notification.NewNotificationHandler(notificationService, hub)
+
 	// Content
 	contentRepo := content.NewContentRepository(db)
 	contentService := content.NewContentService(contentRepo)
@@ -68,17 +75,17 @@ func main() {
 
 	// Follows
 	followRepo := follow.NewFollowRepository(db)
-	followService := follow.NewFollowService(followRepo)
+	followService := follow.NewFollowService(followRepo, notificationService)
 	followHandler := follow.NewFollowHandler(followService)
 
 	// Likes
 	likeRepo := like.NewLikeRepository(db)
-	likeService := like.NewLikeService(likeRepo)
+	likeService := like.NewLikeService(likeRepo, notificationService, contentService)
 	likeHandler := like.NewLikeHandler(likeService)
 
 	// Comments
 	commentRepo := comment.NewCommentRepository(db)
-	commentService := comment.NewCommentService(commentRepo)
+	commentService := comment.NewCommentService(commentRepo, notificationService, contentService)
 	commentHandler := comment.NewCommentHandler(commentService)
 
 	// HTTP mux
@@ -123,9 +130,16 @@ func main() {
 	mux.Handle("/api/comment", auth.Middleware(jwtManager, cfg)(http.HandlerFunc(commentHandler.Create)))
 	mux.Handle("/api/comment/delete/{id}", auth.Middleware(jwtManager, cfg)(http.HandlerFunc(commentHandler.Delete)))
 
+	// NOTIFICATION
+	mux.Handle("/api/notifications", auth.Middleware(jwtManager, cfg)(http.HandlerFunc(notificationHandler.GetMy)))
+	mux.Handle("/api/notifications/read", auth.Middleware(jwtManager, cfg)(http.HandlerFunc(notificationHandler.MarkAsRead)))
+	mux.Handle("/api/notifications/count", auth.Middleware(jwtManager, cfg)(http.HandlerFunc(notificationHandler.GetUnreadCount)))
+
 	// STATIC
 	mux.Handle("/uploads/", http.StripPrefix("/uploads/", http.FileServer(http.Dir("./uploads"))))
 
+	// WEBSOCKET
+	mux.Handle("/ws/notifications", auth.Middleware(jwtManager, cfg)(http.HandlerFunc(notificationHandler.ServeWS)))
 	// Server settings
 	server := &http.Server{
 		Addr:         ":8080",

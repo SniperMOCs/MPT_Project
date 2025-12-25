@@ -5,15 +5,23 @@ import (
 	"errors"
 	"time"
 
+	"github.com/SniperMOCs/MPT_Project/internal/content"
+	"github.com/SniperMOCs/MPT_Project/internal/notification"
 	"github.com/google/uuid"
 )
 
 type commentService struct {
 	repo CommentRepository
+	ns   notification.NotificationService
+	cs   content.ContentService
 }
 
-func NewCommentService(repo CommentRepository) CommentService {
-	return &commentService{repo: repo}
+func NewCommentService(repo CommentRepository, ns notification.NotificationService, cs content.ContentService) CommentService {
+	return &commentService{
+		repo: repo,
+		ns:   ns,
+		cs:   cs,
+	}
 }
 
 func (s *commentService) Create(ctx context.Context, authorId uuid.UUID, parentId *uuid.UUID, contentId uuid.UUID, text string) error {
@@ -25,7 +33,23 @@ func (s *commentService) Create(ctx context.Context, authorId uuid.UUID, parentI
 		Text:      text,
 		CreatedAt: time.Now(),
 	}
-	return s.repo.Create(ctx, comment)
+	if err := s.repo.Create(ctx, comment); err != nil {
+		return err
+	}
+
+	c, err := s.cs.GetByID(ctx, contentId)
+	if err != nil {
+		return err
+	}
+	s.ns.Notify(ctx, authorId, c.AuthorId, c.ID, notification.Comment)
+	if comment.ParentId != nil {
+		parentComment, err := s.repo.GetById(ctx, *comment.ParentId)
+		if err != nil {
+			return err
+		}
+		s.ns.Notify(ctx, authorId, parentComment.AuthorId, parentComment.ID, notification.Comment)
+	}
+	return nil
 }
 
 func (s *commentService) Delete(ctx context.Context, id uuid.UUID, authorId uuid.UUID) error {

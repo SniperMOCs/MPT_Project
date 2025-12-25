@@ -104,9 +104,8 @@ func main() {
 
 	// CONTENT
 	mux.HandleFunc("/api/content/{id}", contentHandler.GetByID)
-	mux.HandleFunc("/api/content/user/{id}", contentHandler.GetByAuthorAndType)
-	mux.HandleFunc("/api/content", contentHandler.GetByType)
-	mux.Handle("/api/content/create/", auth.Middleware(jwtManager, cfg)(http.HandlerFunc(contentHandler.Create)))
+	mux.HandleFunc("/api/content/user/{id}", contentHandler.GetByAuthor)
+	mux.Handle("/api/content/create", auth.Middleware(jwtManager, cfg)(http.HandlerFunc(contentHandler.Create)))
 	mux.Handle("/api/content/delete/{id}", auth.Middleware(jwtManager, cfg)(http.HandlerFunc(contentHandler.Delete)))
 	mux.Handle("/api/content/update/{id}", auth.Middleware(jwtManager, cfg)(http.HandlerFunc(contentHandler.Update)))
 	mux.Handle("/api/content/media/{id}", auth.Middleware(jwtManager, cfg)(http.HandlerFunc(contentHandler.UploadMedia)))

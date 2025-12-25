@@ -31,7 +31,7 @@ func (h *ContentHandler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := h.contentService.Create(r.Context(), dto.ContentType, dto.Description, userID); err != nil {
+	if err := h.contentService.Create(r.Context(), dto.Description, userID); err != nil {
 		http.Error(w, "cannot create content", http.StatusInternalServerError)
 		return
 	}
@@ -61,55 +61,22 @@ func (h *ContentHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(c)
 }
 
-func (h *ContentHandler) GetByType(w http.ResponseWriter, r *http.Request) {
+func (h *ContentHandler) GetByAuthor(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		w.WriteHeader(http.StatusMethodNotAllowed)
 		return
 	}
 
-	contentType := ContentType(r.URL.Query().Get("type"))
-	if contentType == "" {
-		http.Error(w, "content type requiered", http.StatusNotFound)
-		return
-	}
-
-	list, err := h.contentService.GetByType(r.Context(), contentType)
-	if err != nil {
-		http.Error(w, "cannot get content", http.StatusInternalServerError)
-		return
-	}
-
-	json.NewEncoder(w).Encode(list)
-}
-
-func (h *ContentHandler) GetByAuthorAndType(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodGet {
-		w.WriteHeader(http.StatusMethodNotAllowed)
-		return
-	}
-
-	// /api/content/user/{id}?type=POST or type=CLIP or type=STORY
-	url_parts := strings.Split(r.URL.Path, "/")
-	if len(url_parts) < 4 {
-		http.Error(w, "invalid path", http.StatusBadRequest)
-		return
-	}
-
-	userID, err := uuid.Parse(url_parts[4])
+	idStr := strings.TrimPrefix(r.URL.Path, "/api/content/user/")
+	userID, err := uuid.Parse(idStr)
 	if err != nil {
 		http.Error(w, "invalid user id", http.StatusBadRequest)
 		return
 	}
 
-	contentType := ContentType(r.URL.Query().Get("type"))
-	if contentType == "" {
-		http.Error(w, "content type requiered", http.StatusNotFound)
-		return
-	}
-
-	list, err := h.contentService.GetByAuthorAndType(r.Context(), userID, contentType)
+	list, err := h.contentService.GetByAuthor(r.Context(), userID)
 	if err != nil {
-		http.Error(w, "cannot get content", http.StatusInternalServerError)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
@@ -161,7 +128,7 @@ func (h *ContentHandler) Update(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := h.contentService.Update(r.Context(), dto.Description, dto.IsVisible, &dto.MediaURLs, id, userID); err != nil {
-		http.Error(w, "cannot update content", http.StatusInternalServerError)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 

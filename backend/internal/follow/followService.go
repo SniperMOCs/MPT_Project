@@ -4,15 +4,17 @@ import (
 	"context"
 	"errors"
 
+	"github.com/SniperMOCs/MPT_Project/internal/notification"
 	"github.com/google/uuid"
 )
 
 type followService struct {
-	repo FollowRepository
+	repo                FollowRepository
+	notificationService notification.NotificationService
 }
 
-func NewFollowService(repo FollowRepository) FollowService {
-	return &followService{repo: repo}
+func NewFollowService(repo FollowRepository, notificationService notification.NotificationService) FollowService {
+	return &followService{repo: repo, notificationService: notificationService}
 }
 
 func (s *followService) Create(ctx context.Context, followerId uuid.UUID, followingId uuid.UUID) error {
@@ -28,6 +30,7 @@ func (s *followService) Create(ctx context.Context, followerId uuid.UUID, follow
 		return errors.New("already following")
 	}
 
+	s.notificationService.Notify(ctx, followerId, followingId, uuid.Nil, notification.Follow)
 	return s.repo.Create(ctx, followerId, followingId)
 }
 

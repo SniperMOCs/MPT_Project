@@ -14,4 +14,5 @@ type UserRepository interface {
 	Update(ctx context.Context, id uuid.UUID, username string, fullname string, description string) error
 	UpdatePassword(ctx context.Context, userID uuid.UUID, passwordHash string) error
 	UpdateAvatar(ctx context.Context, id uuid.UUID, avatarURL string) error
+	SearchByFullName(ctx context.Context, searchQuery string) ([]*User, error)
 }

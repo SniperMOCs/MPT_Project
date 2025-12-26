@@ -23,7 +23,7 @@ func NewUserHandler(userService UserService) *UserHandler {
 // @Description  Создание нового аккаунта пользователя
 // @Tags         Пользователи
 // @Accept       json
-// @Param        user  body      user.User  true  "Данные пользователя"
+// @Param        dto  body      user.RegisterDTO  true  "Данные для регистрации"
 // @Success      201   "Пользователь успешно создан"
 // @Failure      400   {string}  string     "Неверный формат запроса или username уже занят"
 // @Router       /users/register [post]
@@ -33,13 +33,18 @@ func (h *UserHandler) HandleRegister(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var u User
-	if err := json.NewDecoder(r.Body).Decode(&u); err != nil {
+	var dto RegisterDTO
+	if err := json.NewDecoder(r.Body).Decode(&dto); err != nil {
 		http.Error(w, "invalid request", http.StatusBadRequest)
 		return
 	}
 
-	if err := h.userService.Create(r.Context(), &u); err != nil {
+	u := &User{
+		Username: dto.Username,
+		Password: dto.Password,
+	}
+
+	if err := h.userService.Create(r.Context(), u); err != nil {
 		http.Error(w, "cannot create user", http.StatusBadRequest)
 		return
 	}
@@ -239,4 +244,36 @@ func (h *UserHandler) HandleUploadAvatar(w http.ResponseWriter, r *http.Request)
 	}
 
 	w.WriteHeader(http.StatusOK)
+}
+
+// @Summary      Поиск пользователей по fullname и username
+// @Description  Поиск пользователей по полному имени или username. Возвращает список пользователей, у которых в fullname или username содержится хотя бы одно из указанных слов
+// @Tags         Пользователи
+// @Accept       json
+// @Produce      json
+// @Param        q     query     string      true  "Строка поиска (слова разделяются пробелами)"
+// @Success      200   {array}   user.User   "Список найденных пользователей"
+// @Failure      400   {string}  string       "Неверный формат запроса"
+// @Failure      500   {string}  string       "Ошибка сервера"
+// @Router       /users/search [get]
+func (h *UserHandler) HandleSearchByFullName(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		return
+	}
+
+	searchQuery := r.URL.Query().Get("q")
+	if searchQuery == "" {
+		http.Error(w, "search query is required", http.StatusBadRequest)
+		return
+	}
+
+	users, err := h.userService.SearchByFullName(r.Context(), searchQuery)
+	if err != nil {
+		http.Error(w, "cannot search users", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(users)
 }

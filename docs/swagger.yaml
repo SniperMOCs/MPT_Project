@@ -209,6 +209,16 @@ definitions:
     - Like
     - Comment
     - Follow
+  user.RegisterDTO:
+    description: Данные для регистрации
+    properties:
+      password:
+        example: new_password
+        type: string
+      username:
+        example: john_doe
+        type: string
+    type: object
   user.UpdatePasswordDTO:
     description: Данные для изменения пароля пользователя
     properties:
@@ -1031,12 +1041,12 @@ paths:
       - application/json
       description: Создание нового аккаунта пользователя
       parameters:
-      - description: Данные пользователя
+      - description: Данные для регистрации
         in: body
-        name: user
+        name: dto
         required: true
         schema:
-          $ref: '#/definitions/user.User'
+          $ref: '#/definitions/user.RegisterDTO'
       responses:
         "201":
           description: Пользователь успешно создан
@@ -1045,6 +1055,39 @@ paths:
           schema:
             type: string
       summary: Регистрация нового пользователя
+      tags:
+      - Пользователи
+  /users/search:
+    get:
+      consumes:
+      - application/json
+      description: Поиск пользователей по полному имени или username. Возвращает список
+        пользователей, у которых в fullname или username содержится хотя бы одно из
+        указанных слов
+      parameters:
+      - description: Строка поиска (слова разделяются пробелами)
+        in: query
+        name: q
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Список найденных пользователей
+          schema:
+            items:
+              $ref: '#/definitions/user.User'
+            type: array
+        "400":
+          description: Неверный формат запроса
+          schema:
+            type: string
+        "500":
+          description: Ошибка сервера
+          schema:
+            type: string
+      summary: Поиск пользователей по fullname и username
       tags:
       - Пользователи
   /users/setAvatar:

@@ -139,3 +139,57 @@ func (r *userRepository) UpdateAvatar(ctx context.Context, id uuid.UUID, avatarU
 	_, err := r.db.ExecContext(ctx, query, avatarURL, id)
 	return err
 }
+
+func (r *userRepository) SearchByFullName(ctx context.Context, searchQuery string) ([]*User, error) {
+	words := strings.Fields(strings.TrimSpace(searchQuery))
+	if len(words) == 0 {
+		return []*User{}, nil
+	}
+
+	query := `
+		SELECT id, username, full_name, avatar_url, description, created_at
+		FROM users
+		WHERE (`
+
+	args := []any{}
+	argIndex := 1
+
+	for i, word := range words {
+		if i > 0 {
+			query += " OR "
+		}
+		query += "(COALESCE(full_name, '') ILIKE $" + strconv.Itoa(argIndex) + " OR username ILIKE $" + strconv.Itoa(argIndex+1) + ")"
+		args = append(args, "%"+word+"%", "%"+word+"%")
+		argIndex += 2
+	}
+	query += ") ORDER BY username"
+
+	rows, err := r.db.QueryContext(ctx, query, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var users []*User
+	for rows.Next() {
+		var u User
+		err := rows.Scan(
+			&u.ID,
+			&u.Username,
+			&u.FullName,
+			&u.AvatarURL,
+			&u.Description,
+			&u.CreatedAt,
+		)
+		if err != nil {
+			return nil, err
+		}
+		users = append(users, &u)
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return users, nil
+}

@@ -109,3 +109,7 @@ func (s *userService) UpdateAvatar(ctx context.Context, id uuid.UUID, file io.Re
 
 	return s.repo.UpdateAvatar(ctx, id, path)
 }
+
+func (s *userService) SearchByFullName(ctx context.Context, searchQuery string) ([]*User, error) {
+	return s.repo.SearchByFullName(ctx, searchQuery)
+}

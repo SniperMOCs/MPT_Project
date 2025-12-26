@@ -117,6 +117,7 @@ func main() {
 	mux.HandleFunc("/api/users/register", userHandler.HandleRegister)
 	mux.HandleFunc("/api/users/id/", userHandler.HandleGetByID)
 	mux.HandleFunc("/api/users/username/", userHandler.HandleGetByUsername)
+	mux.HandleFunc("/api/users/search", userHandler.HandleSearchByFullName)
 	mux.Handle("/api/users/me", auth.Middleware(jwtManager, cfg)(http.HandlerFunc(userHandler.HandleMe)))
 	mux.Handle("/api/users/update", auth.Middleware(jwtManager, cfg)(http.HandlerFunc(userHandler.HandleUpdate)))
 	mux.Handle("/api/users/setPassword", auth.Middleware(jwtManager, cfg)(http.HandlerFunc(userHandler.HandleSetPassword)))

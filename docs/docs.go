@@ -1199,12 +1199,12 @@ const docTemplate = `{
                 "summary": "Регистрация нового пользователя",
                 "parameters": [
                     {
-                        "description": "Данные пользователя",
-                        "name": "user",
+                        "description": "Данные для регистрации",
+                        "name": "dto",
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/user.User"
+                            "$ref": "#/definitions/user.RegisterDTO"
                         }
                     }
                 ],
@@ -1214,6 +1214,53 @@ const docTemplate = `{
                     },
                     "400": {
                         "description": "Неверный формат запроса или username уже занят",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/users/search": {
+            "get": {
+                "description": "Поиск пользователей по полному имени или username. Возвращает список пользователей, у которых в fullname или username содержится хотя бы одно из указанных слов",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Пользователи"
+                ],
+                "summary": "Поиск пользователей по fullname и username",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Строка поиска (слова разделяются пробелами)",
+                        "name": "q",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Список найденных пользователей",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/user.User"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Неверный формат запроса",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Ошибка сервера",
                         "schema": {
                             "type": "string"
                         }
@@ -1725,6 +1772,20 @@ const docTemplate = `{
                 "Comment",
                 "Follow"
             ]
+        },
+        "user.RegisterDTO": {
+            "description": "Данные для регистрации",
+            "type": "object",
+            "properties": {
+                "password": {
+                    "type": "string",
+                    "example": "new_password"
+                },
+                "username": {
+                    "type": "string",
+                    "example": "john_doe"
+                }
+            }
         },
         "user.UpdatePasswordDTO": {
             "description": "Данные для изменения пароля пользователя",

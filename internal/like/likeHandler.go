@@ -17,6 +17,17 @@ func NewLikeHandler(likeService LikeService) *LikeHandler {
 	return &LikeHandler{likeService: likeService}
 }
 
+// @Summary      Поставить лайк
+// @Description  Постановка лайка текущим пользователем на указанный пост
+// @Tags         Лайки
+// @Accept       json
+// @Security     BearerAuth
+// @Param        id   path      string  true  "ID поста (UUID)"
+// @Success      201  "Лайк поставлен"
+// @Failure      400  {string}  string  "Неверный ID поста"
+// @Failure      401  {string}  string  "Не авторизован"
+// @Failure      500  {string}  string  "Ошибка сервера"
+// @Router       /like/{id} [post]
 func (h *LikeHandler) Create(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		w.WriteHeader(http.StatusMethodNotAllowed)
@@ -40,6 +51,17 @@ func (h *LikeHandler) Create(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusCreated)
 }
 
+// @Summary      Убрать лайк
+// @Description  Удаление лайка текущего пользователя с указанного поста
+// @Tags         Лайки
+// @Accept       json
+// @Security     BearerAuth
+// @Param        id   path      string  true  "ID поста (UUID)"
+// @Success      200  "Лайк удален"
+// @Failure      400  {string}  string  "Неверный ID поста"
+// @Failure      401  {string}  string  "Не авторизован"
+// @Failure      500  {string}  string  "Ошибка сервера"
+// @Router       /unlike/{id} [delete]
 func (h *LikeHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodDelete {
 		w.WriteHeader(http.StatusMethodNotAllowed)
@@ -64,6 +86,18 @@ func (h *LikeHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
+// @Summary      Проверить лайк
+// @Description  Проверяет, лайкнул ли текущий пользователь указанный пост
+// @Tags         Лайки
+// @Accept       json
+// @Produce      json
+// @Security     BearerAuth
+// @Param        id   path      string  true  "ID поста (UUID)"
+// @Success      200  {boolean} bool    "Результат проверки"
+// @Failure      400  {string}  string  "Неверный ID поста"
+// @Failure      401  {string}  string  "Не авторизован"
+// @Failure      500  {string}  string  "Ошибка сервера"
+// @Router       /liked/{id} [get]
 func (h *LikeHandler) Exists(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		w.WriteHeader(http.StatusMethodNotAllowed)
@@ -88,6 +122,16 @@ func (h *LikeHandler) Exists(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(isLiked)
 }
 
+// @Summary      Получить количество лайков
+// @Description  Возвращает количество лайков указанного поста
+// @Tags         Лайки
+// @Accept       json
+// @Produce      json
+// @Param        id   path      string  true  "ID поста (UUID)"
+// @Success      200  {integer} int     "Количество лайков"
+// @Failure      400  {string}  string  "Неверный ID поста"
+// @Failure      500  {string}  string  "Ошибка сервера"
+// @Router       /likes/{id} [get]
 func (h *LikeHandler) GetLikesCount(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		w.WriteHeader(http.StatusMethodNotAllowed)

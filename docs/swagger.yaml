@@ -1,0 +1,1200 @@
+basePath: /api
+definitions:
+  auth.loginRequest:
+    description: Данные для аутентификации пользователя
+    properties:
+      password:
+        description: Пароль пользователя
+        example: password123
+        type: string
+      username:
+        description: Имя пользователя
+        example: john_doe
+        type: string
+    type: object
+  auth.loginResponse:
+    description: Ответ после успешной аутентификации
+    properties:
+      access_token:
+        description: JWT токен доступа
+        example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+        type: string
+    type: object
+  comment.Comment:
+    description: Информация о комментарии
+    properties:
+      author_id:
+        description: ID автора комментария
+        example: 550e8400-e29b-41d4-a716-446655440000
+        type: string
+      content_id:
+        description: ID поста
+        example: 550e8400-e29b-41d4-a716-446655440000
+        type: string
+      created_at:
+        description: Дата создания комментария
+        example: "2024-01-01T00:00:00Z"
+        type: string
+      id:
+        description: Уникальный идентификатор комментария
+        example: 550e8400-e29b-41d4-a716-446655440000
+        type: string
+      parent_id:
+        description: ID родительского комментария (для ответов, опционально)
+        example: 550e8400-e29b-41d4-a716-446655440000
+        type: string
+      text:
+        description: Текст комментария
+        example: Great post!
+        type: string
+    type: object
+  comment.CommentDTO:
+    description: Данные для создания нового комментария
+    properties:
+      content_id:
+        description: ID поста
+        example: 550e8400-e29b-41d4-a716-446655440000
+        type: string
+      parent_id:
+        description: ID родительского комментария (для ответов, опционально)
+        example: 550e8400-e29b-41d4-a716-446655440000
+        type: string
+      text:
+        description: Текст комментария
+        example: Great post!
+        type: string
+    type: object
+  content.Content:
+    description: Описание поста
+    properties:
+      author_id:
+        description: ID автора поста
+        example: 550e8400-e29b-41d4-a716-446655440000
+        type: string
+      created_at:
+        description: Дата создания поста
+        example: "2024-01-01T00:00:00Z"
+        type: string
+      description:
+        description: Описание поста
+        example: Beautiful sunset!
+        type: string
+      id:
+        description: Уникальный идентификатор поста
+        example: 550e8400-e29b-41d4-a716-446655440000
+        type: string
+      is_visible:
+        description: Видимость поста
+        example: true
+        type: boolean
+      media_urls:
+        description: Массив URL медиа-файлов
+        example:
+        - '[/uploads/content/post1/image1.jpg]'
+        items:
+          type: string
+        type: array
+    type: object
+  content.ContentDTO:
+    description: Данные для создания нового поста
+    properties:
+      description:
+        description: Описание поста
+        example: Beautiful sunset!
+        type: string
+    type: object
+  content.UpdatePostDTO:
+    description: Данные для обновления существующего поста
+    properties:
+      description:
+        description: Описание поста (опционально)
+        example: Updated description
+        type: string
+      is_visible:
+        description: Видимость поста (опционально)
+        example: true
+        type: boolean
+      media_urls:
+        description: Массив URL медиа-файлов (опционально)
+        example:
+        - '[/uploads/content/post1/image1.jpg]'
+        items:
+          type: string
+        type: array
+    type: object
+  follow.Follow:
+    description: Информация о подписке
+    properties:
+      created_at:
+        description: Дата создания подписки
+        example: "2024-01-01T00:00:00Z"
+        type: string
+      follower_id:
+        description: ID подписчика
+        example: 550e8400-e29b-41d4-a716-446655440000
+        type: string
+      following_id:
+        description: ID пользователя, на которого подписались
+        example: 550e8400-e29b-41d4-a716-446655440000
+        type: string
+      id:
+        description: Уникальный идентификатор подписки
+        example: 550e8400-e29b-41d4-a716-446655440000
+        type: string
+    type: object
+  follow.FollowInfoDTO:
+    description: Количество подписчиков и подписок пользователя
+    properties:
+      followers_count:
+        description: Количество подписчиков
+        example: 100
+        type: integer
+      following_count:
+        description: Количество подписок
+        example: 50
+        type: integer
+    type: object
+  notification.Notification:
+    description: Информация об уведомлении
+    properties:
+      Actor:
+        description: ID пользователя, который выполнил действие
+        example: 550e8400-e29b-41d4-a716-446655440000
+        type: string
+      CreatedAt:
+        description: Дата создания уведомления
+        example: "2024-01-01T00:00:00Z"
+        type: string
+      ID:
+        description: Уникальный идентификатор уведомления
+        example: 550e8400-e29b-41d4-a716-446655440000
+        type: string
+      Read:
+        description: Прочитано ли уведомление
+        example: false
+        type: boolean
+      Recipient:
+        description: ID получателя уведомления
+        example: 550e8400-e29b-41d4-a716-446655440000
+        type: string
+      TargetId:
+        description: ID целевого объекта (пост, комментарий и т.д.)
+        example: 550e8400-e29b-41d4-a716-446655440000
+        type: string
+      Type:
+        allOf:
+        - $ref: '#/definitions/notification.NotificationType'
+        description: Тип уведомления
+        enum:
+        - LIKE
+        - COMMENT
+        - FOLLOW
+        example: LIKE
+    type: object
+  notification.NotificationType:
+    enum:
+    - LIKE
+    - COMMENT
+    - FOLLOW
+    type: string
+    x-enum-comments:
+      Comment: Уведомление о комментарии
+      Follow: Уведомление о подписке
+      Like: Уведомление о лайке
+    x-enum-descriptions:
+    - Уведомление о лайке
+    - Уведомление о комментарии
+    - Уведомление о подписке
+    x-enum-varnames:
+    - Like
+    - Comment
+    - Follow
+  user.UpdatePasswordDTO:
+    description: Данные для изменения пароля пользователя
+    properties:
+      new_password:
+        description: Новый пароль
+        example: newpass123
+        type: string
+      old_password:
+        description: Текущий пароль
+        example: oldpass123
+        type: string
+    type: object
+  user.User:
+    description: Информация о пользователе
+    properties:
+      avatar_url:
+        description: URL аватара (опционально)
+        example: /uploads/avatars/avatar.jpg
+        type: string
+      created_at:
+        description: Дата создания аккаунта
+        example: "2024-01-01T00:00:00Z"
+        type: string
+      description:
+        description: Описание профиля (опционально)
+        example: Software developer
+        type: string
+      full_name:
+        description: Полное имя пользователя (опционально)
+        example: John Doe
+        type: string
+      id:
+        description: Уникальный идентификатор пользователя
+        example: 550e8400-e29b-41d4-a716-446655440000
+        type: string
+      username:
+        description: Имя пользователя
+        example: john_doe
+        type: string
+    type: object
+  user.UserDTO:
+    description: Данные для обновления профиля
+    properties:
+      description:
+        description: Описание профиля (опционально)
+        example: Developer
+        type: string
+      full_name:
+        description: Полное имя (опционально)
+        example: John Doe
+        type: string
+      username:
+        description: Имя пользователя (опционально)
+        example: john_doe
+        type: string
+    type: object
+host: localhost:8080
+info:
+  contact:
+    email: snipermocs@gmail.com
+    name: API Support
+  description: |-
+    Backend-приложение на Go, реализующее функциональность социальной сети, аналогичной Instagram.
+    Предоставляет REST API для управления пользователями, публикациями, комментариями, лайками, подписками и уведомлениями в реальном времени через WebSocket.
+  title: Zapretgram Backend API
+  version: "1.0"
+paths:
+  /comment:
+    post:
+      consumes:
+      - application/json
+      description: Создание нового комментария к посту или ответ на существующий комментарий
+      parameters:
+      - description: Данные комментария
+        in: body
+        name: dto
+        required: true
+        schema:
+          $ref: '#/definitions/comment.CommentDTO'
+      responses:
+        "201":
+          description: Комментарий создан
+        "400":
+          description: Неверный формат запроса
+          schema:
+            type: string
+        "401":
+          description: Не авторизован
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: Создать комментарий
+      tags:
+      - Комментарии
+  /comment/content/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Возвращает список всех комментариев к указанному посту
+      parameters:
+      - description: ID поста (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Список комментариев
+          schema:
+            items:
+              $ref: '#/definitions/comment.Comment'
+            type: array
+        "400":
+          description: Неверный ID поста
+          schema:
+            type: string
+        "500":
+          description: Ошибка сервера
+          schema:
+            type: string
+      summary: Получить комментарии к посту
+      tags:
+      - Комментарии
+  /comment/delete/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Удаление комментария (только свои комментарии)
+      parameters:
+      - description: ID комментария (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "200":
+          description: Комментарий удален
+        "400":
+          description: Неверный ID комментария или нет прав на удаление
+          schema:
+            type: string
+        "401":
+          description: Не авторизован
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: Удалить комментарий
+      tags:
+      - Комментарии
+  /content/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Возвращает информацию о посте по его ID
+      parameters:
+      - description: ID поста (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Информация о посте
+          schema:
+            $ref: '#/definitions/content.Content'
+        "400":
+          description: Неверный ID поста
+          schema:
+            type: string
+        "404":
+          description: Пост не найден
+          schema:
+            type: string
+      summary: Получить пост по ID
+      tags:
+      - Контент
+  /content/create:
+    post:
+      consumes:
+      - application/json
+      description: Создание нового поста текущим пользователем
+      parameters:
+      - description: Данные поста
+        in: body
+        name: dto
+        required: true
+        schema:
+          $ref: '#/definitions/content.ContentDTO'
+      responses:
+        "201":
+          description: Пост создан
+        "400":
+          description: Неверный формат запроса
+          schema:
+            type: string
+        "401":
+          description: Не авторизован
+          schema:
+            type: string
+        "500":
+          description: Ошибка сервера
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: Создать пост
+      tags:
+      - Контент
+  /content/delete/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Удаление поста текущим пользователем (только свои посты)
+      parameters:
+      - description: ID поста (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "200":
+          description: Пост удален
+        "400":
+          description: Неверный ID поста или нет прав на удаление
+          schema:
+            type: string
+        "401":
+          description: Не авторизован
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: Удалить пост
+      tags:
+      - Контент
+  /content/media/{id}:
+    post:
+      consumes:
+      - multipart/form-data
+      description: Загрузка медиа-файлов (изображения/видео) к существующему посту
+      parameters:
+      - description: ID поста (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Медиа-файлы
+        in: formData
+        name: files
+        required: true
+        type: file
+      responses:
+        "201":
+          description: Медиа загружено
+        "400":
+          description: Неверный формат запроса или файлы не предоставлены
+          schema:
+            type: string
+        "401":
+          description: Не авторизован
+          schema:
+            type: string
+        "500":
+          description: Ошибка сервера
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: Загрузить медиа к посту
+      tags:
+      - Контент
+  /content/update/{id}:
+    patch:
+      consumes:
+      - application/json
+      description: Обновление информации о посте (только свои посты)
+      parameters:
+      - description: ID поста (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Данные для обновления
+        in: body
+        name: dto
+        required: true
+        schema:
+          $ref: '#/definitions/content.UpdatePostDTO'
+      responses:
+        "200":
+          description: Пост обновлен
+        "400":
+          description: Неверный формат запроса
+          schema:
+            type: string
+        "401":
+          description: Не авторизован
+          schema:
+            type: string
+        "500":
+          description: Ошибка сервера
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: Обновить пост
+      tags:
+      - Контент
+  /content/user/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Возвращает список всех постов указанного пользователя
+      parameters:
+      - description: ID пользователя (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Список постов
+          schema:
+            items:
+              $ref: '#/definitions/content.Content'
+            type: array
+        "400":
+          description: Неверный ID пользователя
+          schema:
+            type: string
+        "500":
+          description: Ошибка сервера
+          schema:
+            type: string
+      summary: Получить посты пользователя
+      tags:
+      - Контент
+  /follow/{id}:
+    post:
+      consumes:
+      - application/json
+      description: Создание подписки текущего пользователя на указанного пользователя
+      parameters:
+      - description: ID пользователя для подписки (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "201":
+          description: Подписка создана
+        "400":
+          description: Неверный ID пользователя
+          schema:
+            type: string
+        "401":
+          description: Не авторизован
+          schema:
+            type: string
+        "500":
+          description: Ошибка сервера
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: Подписаться на пользователя
+      tags:
+      - Подписки
+  /follow/info/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Возвращает количество подписчиков и подписок указанного пользователя
+      parameters:
+      - description: ID пользователя (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Информация о подписках
+          schema:
+            $ref: '#/definitions/follow.FollowInfoDTO'
+        "400":
+          description: Неверный ID пользователя
+          schema:
+            type: string
+        "500":
+          description: Ошибка сервера
+          schema:
+            type: string
+      summary: Получить число подписок и подписчиков
+      tags:
+      - Подписки
+  /follower/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Проверяет, подписан ли текущий пользователь на указанного пользователя
+      parameters:
+      - description: ID пользователя (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Результат проверки
+          schema:
+            type: boolean
+        "400":
+          description: Неверный ID пользователя
+          schema:
+            type: string
+        "401":
+          description: Не авторизован
+          schema:
+            type: string
+        "500":
+          description: Ошибка сервера
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: Проверить подписку
+      tags:
+      - Подписки
+  /followers/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Возвращает список всех подписчиков указанного пользователя
+      parameters:
+      - description: ID пользователя (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Список подписчиков
+          schema:
+            items:
+              $ref: '#/definitions/follow.Follow'
+            type: array
+        "400":
+          description: Неверный ID пользователя
+          schema:
+            type: string
+        "500":
+          description: Ошибка сервера
+          schema:
+            type: string
+      summary: Получить подписчиков пользователя
+      tags:
+      - Подписки
+  /following/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Возвращает список всех подписок указанного пользователя
+      parameters:
+      - description: ID пользователя (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Список подписок
+          schema:
+            items:
+              $ref: '#/definitions/follow.Follow'
+            type: array
+        "400":
+          description: Неверный ID пользователя
+          schema:
+            type: string
+        "500":
+          description: Ошибка сервера
+          schema:
+            type: string
+      summary: Получить подписки пользователя
+      tags:
+      - Подписки
+  /like/{id}:
+    post:
+      consumes:
+      - application/json
+      description: Постановка лайка текущим пользователем на указанный пост
+      parameters:
+      - description: ID поста (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "201":
+          description: Лайк поставлен
+        "400":
+          description: Неверный ID поста
+          schema:
+            type: string
+        "401":
+          description: Не авторизован
+          schema:
+            type: string
+        "500":
+          description: Ошибка сервера
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: Поставить лайк
+      tags:
+      - Лайки
+  /liked/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Проверяет, лайкнул ли текущий пользователь указанный пост
+      parameters:
+      - description: ID поста (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Результат проверки
+          schema:
+            type: boolean
+        "400":
+          description: Неверный ID поста
+          schema:
+            type: string
+        "401":
+          description: Не авторизован
+          schema:
+            type: string
+        "500":
+          description: Ошибка сервера
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: Проверить лайк
+      tags:
+      - Лайки
+  /likes/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Возвращает количество лайков указанного поста
+      parameters:
+      - description: ID поста (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Количество лайков
+          schema:
+            type: integer
+        "400":
+          description: Неверный ID поста
+          schema:
+            type: string
+        "500":
+          description: Ошибка сервера
+          schema:
+            type: string
+      summary: Получить количество лайков
+      tags:
+      - Лайки
+  /notifications:
+    get:
+      consumes:
+      - application/json
+      description: Возвращает список всех уведомлений текущего пользователя
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Список уведомлений
+          schema:
+            items:
+              $ref: '#/definitions/notification.Notification'
+            type: array
+        "401":
+          description: Не авторизован
+          schema:
+            type: string
+        "404":
+          description: Уведомления не найдены
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: Получить уведомления
+      tags:
+      - Уведомления
+  /notifications/count:
+    get:
+      consumes:
+      - application/json
+      description: Возвращает количество непрочитанных уведомлений текущего пользователя
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Количество непрочитанных уведомлений
+          schema:
+            type: integer
+        "401":
+          description: Не авторизован
+          schema:
+            type: string
+        "404":
+          description: Ошибка получения количества
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: Получить количество непрочитанных уведомлений
+      tags:
+      - Уведомления
+  /notifications/read:
+    patch:
+      consumes:
+      - application/json
+      description: Отмечает все уведомления текущего пользователя как прочитанные
+      responses:
+        "200":
+          description: Уведомления отмечены как прочитанные
+        "401":
+          description: Не авторизован
+          schema:
+            type: string
+        "500":
+          description: Ошибка сервера
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: Отметить уведомления как прочитанные
+      tags:
+      - Уведомления
+  /unfollow/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Удаление подписки текущего пользователя на указанного пользователя
+      parameters:
+      - description: ID пользователя для отписки (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "200":
+          description: Подписка удалена
+        "400":
+          description: Неверный ID пользователя
+          schema:
+            type: string
+        "401":
+          description: Не авторизован
+          schema:
+            type: string
+        "500":
+          description: Ошибка сервера
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: Отписаться от пользователя
+      tags:
+      - Подписки
+  /unlike/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Удаление лайка текущего пользователя с указанного поста
+      parameters:
+      - description: ID поста (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "200":
+          description: Лайк удален
+        "400":
+          description: Неверный ID поста
+          schema:
+            type: string
+        "401":
+          description: Не авторизован
+          schema:
+            type: string
+        "500":
+          description: Ошибка сервера
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: Убрать лайк
+      tags:
+      - Лайки
+  /users/id/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Возвращает информацию о пользователе по его ID
+      parameters:
+      - description: ID пользователя (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Информация о пользователе
+          schema:
+            $ref: '#/definitions/user.User'
+        "400":
+          description: Неверный ID пользователя
+          schema:
+            type: string
+        "404":
+          description: Пользователь не найден
+          schema:
+            type: string
+      summary: Получить пользователя по ID
+      tags:
+      - Пользователи
+  /users/login:
+    post:
+      consumes:
+      - application/json
+      description: Аутентификация пользователя и получение JWT токена
+      parameters:
+      - description: Данные для входа
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/auth.loginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Токен доступа
+          schema:
+            $ref: '#/definitions/auth.loginResponse'
+        "400":
+          description: Неверный формат запроса
+          schema:
+            type: string
+        "401":
+          description: Неверные учетные данные
+          schema:
+            type: string
+      summary: Вход в систему
+      tags:
+      - Аутентификация
+  /users/me:
+    get:
+      consumes:
+      - application/json
+      description: Возвращает информацию о текущем аутентифицированном пользователе
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Информация о пользователе
+          schema:
+            $ref: '#/definitions/user.User'
+        "401":
+          description: Не авторизован
+          schema:
+            type: string
+        "404":
+          description: Пользователь не найден
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: Получить текущего пользователя
+      tags:
+      - Пользователи
+  /users/register:
+    post:
+      consumes:
+      - application/json
+      description: Создание нового аккаунта пользователя
+      parameters:
+      - description: Данные пользователя
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/user.User'
+      responses:
+        "201":
+          description: Пользователь успешно создан
+        "400":
+          description: Неверный формат запроса или username уже занят
+          schema:
+            type: string
+      summary: Регистрация нового пользователя
+      tags:
+      - Пользователи
+  /users/setAvatar:
+    post:
+      consumes:
+      - multipart/form-data
+      description: Загрузка аватара для текущего пользователя
+      parameters:
+      - description: Файл изображения
+        in: formData
+        name: file
+        required: true
+        type: file
+      responses:
+        "200":
+          description: Аватар загружен
+        "400":
+          description: Неверный файл
+          schema:
+            type: string
+        "401":
+          description: Не авторизован
+          schema:
+            type: string
+        "500":
+          description: Ошибка сервера
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: Загрузить аватар
+      tags:
+      - Пользователи
+  /users/setPassword:
+    patch:
+      consumes:
+      - application/json
+      description: Изменение пароля текущего пользователя
+      parameters:
+      - description: Старый и новый пароль
+        in: body
+        name: dto
+        required: true
+        schema:
+          $ref: '#/definitions/user.UpdatePasswordDTO'
+      responses:
+        "204":
+          description: Пароль успешно изменен
+        "400":
+          description: Неверный формат запроса или неверный старый пароль
+          schema:
+            type: string
+        "401":
+          description: Не авторизован
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: Изменить пароль
+      tags:
+      - Пользователи
+  /users/update:
+    patch:
+      consumes:
+      - application/json
+      description: Обновление информации профиля текущего пользователя
+      parameters:
+      - description: Данные для обновления
+        in: body
+        name: dto
+        required: true
+        schema:
+          $ref: '#/definitions/user.UserDTO'
+      responses:
+        "200":
+          description: Профиль обновлен
+        "400":
+          description: Неверный формат запроса
+          schema:
+            type: string
+        "401":
+          description: Не авторизован
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: Обновить профиль
+      tags:
+      - Пользователи
+  /users/username/{username}:
+    get:
+      consumes:
+      - application/json
+      description: Возвращает информацию о пользователе по его username
+      parameters:
+      - description: Username пользователя
+        in: path
+        name: username
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Информация о пользователе
+          schema:
+            $ref: '#/definitions/user.User'
+        "400":
+          description: Username не указан
+          schema:
+            type: string
+        "404":
+          description: Пользователь не найден
+          schema:
+            type: string
+      summary: Получить пользователя по username
+      tags:
+      - Пользователи
+  /ws/notifications:
+    get:
+      consumes:
+      - application/json
+      description: 'Устанавливает WebSocket соединение для получения уведомлений в
+        реальном времени. Требует заголовок Authorization: Bearer {token}'
+      parameters:
+      - description: Bearer {token}
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "101":
+          description: Switching Protocols
+          schema:
+            type: string
+        "401":
+          description: Не авторизован
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: WebSocket соединение для уведомлений
+      tags:
+      - Уведомления
+securityDefinitions:
+  BearerAuth:
+    description: 'Введите токен в формате: Bearer {token}'
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

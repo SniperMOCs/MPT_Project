@@ -13,6 +13,16 @@ func NewAuthHandler(authService AuthService) *AuthHandler {
 	return &AuthHandler{authService: authService}
 }
 
+// @Summary      Вход в систему
+// @Description  Аутентификация пользователя и получение JWT токена
+// @Tags         Аутентификация
+// @Accept       json
+// @Produce      json
+// @Param        request  body      loginRequest  true  "Данные для входа"
+// @Success      200      {object}  loginResponse  "Токен доступа"
+// @Failure      400      {string}  string        "Неверный формат запроса"
+// @Failure      401      {string}  string        "Неверные учетные данные"
+// @Router       /users/login [post]
 func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		w.WriteHeader(http.StatusMethodNotAllowed)

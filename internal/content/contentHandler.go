@@ -17,6 +17,17 @@ func NewContentHandler(contentService ContentService) *ContentHandler {
 	return &ContentHandler{contentService: contentService}
 }
 
+// @Summary      Создать пост
+// @Description  Создание нового поста текущим пользователем
+// @Tags         Контент
+// @Accept       json
+// @Security     BearerAuth
+// @Param        dto  body      content.ContentDTO  true  "Данные поста"
+// @Success      201  "Пост создан"
+// @Failure      400  {string}  string              "Неверный формат запроса"
+// @Failure      401  {string}  string              "Не авторизован"
+// @Failure      500  {string}  string              "Ошибка сервера"
+// @Router       /content/create [post]
 func (h *ContentHandler) Create(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		w.WriteHeader(http.StatusMethodNotAllowed)
@@ -39,6 +50,16 @@ func (h *ContentHandler) Create(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusCreated)
 }
 
+// @Summary      Получить пост по ID
+// @Description  Возвращает информацию о посте по его ID
+// @Tags         Контент
+// @Accept       json
+// @Produce      json
+// @Param        id   path      string         true  "ID поста (UUID)"
+// @Success      200  {object}  content.Content  "Информация о посте"
+// @Failure      400  {string}  string         "Неверный ID поста"
+// @Failure      404  {string}  string         "Пост не найден"
+// @Router       /content/{id} [get]
 func (h *ContentHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		w.WriteHeader(http.StatusMethodNotAllowed)
@@ -61,6 +82,16 @@ func (h *ContentHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(c)
 }
 
+// @Summary      Получить посты пользователя
+// @Description  Возвращает список всех постов указанного пользователя
+// @Tags         Контент
+// @Accept       json
+// @Produce      json
+// @Param        id   path      string           true  "ID пользователя (UUID)"
+// @Success      200  {array}   content.Content  "Список постов"
+// @Failure      400  {string}  string           "Неверный ID пользователя"
+// @Failure      500  {string}  string           "Ошибка сервера"
+// @Router       /content/user/{id} [get]
 func (h *ContentHandler) GetByAuthor(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		w.WriteHeader(http.StatusMethodNotAllowed)
@@ -83,6 +114,16 @@ func (h *ContentHandler) GetByAuthor(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(list)
 }
 
+// @Summary      Удалить пост
+// @Description  Удаление поста текущим пользователем (только свои посты)
+// @Tags         Контент
+// @Accept       json
+// @Security     BearerAuth
+// @Param        id   path      string  true  "ID поста (UUID)"
+// @Success      200  "Пост удален"
+// @Failure      400  {string}  string  "Неверный ID поста или нет прав на удаление"
+// @Failure      401  {string}  string  "Не авторизован"
+// @Router       /content/delete/{id} [delete]
 func (h *ContentHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodDelete {
 		w.WriteHeader(http.StatusMethodNotAllowed)
@@ -106,6 +147,18 @@ func (h *ContentHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
+// @Summary      Обновить пост
+// @Description  Обновление информации о посте (только свои посты)
+// @Tags         Контент
+// @Accept       json
+// @Security     BearerAuth
+// @Param        id   path      string              true  "ID поста (UUID)"
+// @Param        dto  body      content.UpdatePostDTO  true  "Данные для обновления"
+// @Success      200  "Пост обновлен"
+// @Failure      400  {string}  string                "Неверный формат запроса"
+// @Failure      401  {string}  string                "Не авторизован"
+// @Failure      500  {string}  string                "Ошибка сервера"
+// @Router       /content/update/{id} [patch]
 func (h *ContentHandler) Update(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPatch {
 		w.WriteHeader(http.StatusMethodNotAllowed)
@@ -135,6 +188,18 @@ func (h *ContentHandler) Update(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
+// @Summary      Загрузить медиа к посту
+// @Description  Загрузка медиа-файлов (изображения/видео) к существующему посту
+// @Tags         Контент
+// @Accept       multipart/form-data
+// @Security     BearerAuth
+// @Param        id     path      string  true  "ID поста (UUID)"
+// @Param        files  formData  file    true  "Медиа-файлы"
+// @Success      201    "Медиа загружено"
+// @Failure      400    {string}  string  "Неверный формат запроса или файлы не предоставлены"
+// @Failure      401    {string}  string  "Не авторизован"
+// @Failure      500    {string}  string  "Ошибка сервера"
+// @Router       /content/media/{id} [post]
 func (h *ContentHandler) UploadMedia(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		w.WriteHeader(http.StatusMethodNotAllowed)

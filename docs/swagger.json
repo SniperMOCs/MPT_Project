@@ -1,0 +1,1805 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "description": "Backend-приложение на Go, реализующее функциональность социальной сети, аналогичной Instagram.\nПредоставляет REST API для управления пользователями, публикациями, комментариями, лайками, подписками и уведомлениями в реальном времени через WebSocket.",
+        "title": "Zapretgram Backend API",
+        "contact": {
+            "name": "API Support",
+            "email": "snipermocs@gmail.com"
+        },
+        "version": "1.0"
+    },
+    "host": "localhost:8080",
+    "basePath": "/api",
+    "paths": {
+        "/comment": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Создание нового комментария к посту или ответ на существующий комментарий",
+                "consumes": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Комментарии"
+                ],
+                "summary": "Создать комментарий",
+                "parameters": [
+                    {
+                        "description": "Данные комментария",
+                        "name": "dto",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/comment.CommentDTO"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Комментарий создан"
+                    },
+                    "400": {
+                        "description": "Неверный формат запроса",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "401": {
+                        "description": "Не авторизован",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/comment/content/{id}": {
+            "get": {
+                "description": "Возвращает список всех комментариев к указанному посту",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Комментарии"
+                ],
+                "summary": "Получить комментарии к посту",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "ID поста (UUID)",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Список комментариев",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/comment.Comment"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Неверный ID поста",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Ошибка сервера",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/comment/delete/{id}": {
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Удаление комментария (только свои комментарии)",
+                "consumes": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Комментарии"
+                ],
+                "summary": "Удалить комментарий",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "ID комментария (UUID)",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Комментарий удален"
+                    },
+                    "400": {
+                        "description": "Неверный ID комментария или нет прав на удаление",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "401": {
+                        "description": "Не авторизован",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/content/create": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Создание нового поста текущим пользователем",
+                "consumes": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Контент"
+                ],
+                "summary": "Создать пост",
+                "parameters": [
+                    {
+                        "description": "Данные поста",
+                        "name": "dto",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/content.ContentDTO"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Пост создан"
+                    },
+                    "400": {
+                        "description": "Неверный формат запроса",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "401": {
+                        "description": "Не авторизован",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Ошибка сервера",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/content/delete/{id}": {
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Удаление поста текущим пользователем (только свои посты)",
+                "consumes": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Контент"
+                ],
+                "summary": "Удалить пост",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "ID поста (UUID)",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Пост удален"
+                    },
+                    "400": {
+                        "description": "Неверный ID поста или нет прав на удаление",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "401": {
+                        "description": "Не авторизован",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/content/media/{id}": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Загрузка медиа-файлов (изображения/видео) к существующему посту",
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "tags": [
+                    "Контент"
+                ],
+                "summary": "Загрузить медиа к посту",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "ID поста (UUID)",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "file",
+                        "description": "Медиа-файлы",
+                        "name": "files",
+                        "in": "formData",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Медиа загружено"
+                    },
+                    "400": {
+                        "description": "Неверный формат запроса или файлы не предоставлены",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "401": {
+                        "description": "Не авторизован",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Ошибка сервера",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/content/update/{id}": {
+            "patch": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Обновление информации о посте (только свои посты)",
+                "consumes": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Контент"
+                ],
+                "summary": "Обновить пост",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "ID поста (UUID)",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Данные для обновления",
+                        "name": "dto",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/content.UpdatePostDTO"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Пост обновлен"
+                    },
+                    "400": {
+                        "description": "Неверный формат запроса",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "401": {
+                        "description": "Не авторизован",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Ошибка сервера",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/content/user/{id}": {
+            "get": {
+                "description": "Возвращает список всех постов указанного пользователя",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Контент"
+                ],
+                "summary": "Получить посты пользователя",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "ID пользователя (UUID)",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Список постов",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/content.Content"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Неверный ID пользователя",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Ошибка сервера",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/content/{id}": {
+            "get": {
+                "description": "Возвращает информацию о посте по его ID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Контент"
+                ],
+                "summary": "Получить пост по ID",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "ID поста (UUID)",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Информация о посте",
+                        "schema": {
+                            "$ref": "#/definitions/content.Content"
+                        }
+                    },
+                    "400": {
+                        "description": "Неверный ID поста",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "Пост не найден",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/follow/info/{id}": {
+            "get": {
+                "description": "Возвращает количество подписчиков и подписок указанного пользователя",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Подписки"
+                ],
+                "summary": "Получить число подписок и подписчиков",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "ID пользователя (UUID)",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Информация о подписках",
+                        "schema": {
+                            "$ref": "#/definitions/follow.FollowInfoDTO"
+                        }
+                    },
+                    "400": {
+                        "description": "Неверный ID пользователя",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Ошибка сервера",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/follow/{id}": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Создание подписки текущего пользователя на указанного пользователя",
+                "consumes": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Подписки"
+                ],
+                "summary": "Подписаться на пользователя",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "ID пользователя для подписки (UUID)",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Подписка создана"
+                    },
+                    "400": {
+                        "description": "Неверный ID пользователя",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "401": {
+                        "description": "Не авторизован",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Ошибка сервера",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/follower/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Проверяет, подписан ли текущий пользователь на указанного пользователя",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Подписки"
+                ],
+                "summary": "Проверить подписку",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "ID пользователя (UUID)",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Результат проверки",
+                        "schema": {
+                            "type": "boolean"
+                        }
+                    },
+                    "400": {
+                        "description": "Неверный ID пользователя",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "401": {
+                        "description": "Не авторизован",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Ошибка сервера",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/followers/{id}": {
+            "get": {
+                "description": "Возвращает список всех подписчиков указанного пользователя",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Подписки"
+                ],
+                "summary": "Получить подписчиков пользователя",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "ID пользователя (UUID)",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Список подписчиков",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/follow.Follow"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Неверный ID пользователя",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Ошибка сервера",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/following/{id}": {
+            "get": {
+                "description": "Возвращает список всех подписок указанного пользователя",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Подписки"
+                ],
+                "summary": "Получить подписки пользователя",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "ID пользователя (UUID)",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Список подписок",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/follow.Follow"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Неверный ID пользователя",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Ошибка сервера",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/like/{id}": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Постановка лайка текущим пользователем на указанный пост",
+                "consumes": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Лайки"
+                ],
+                "summary": "Поставить лайк",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "ID поста (UUID)",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Лайк поставлен"
+                    },
+                    "400": {
+                        "description": "Неверный ID поста",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "401": {
+                        "description": "Не авторизован",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Ошибка сервера",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/liked/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Проверяет, лайкнул ли текущий пользователь указанный пост",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Лайки"
+                ],
+                "summary": "Проверить лайк",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "ID поста (UUID)",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Результат проверки",
+                        "schema": {
+                            "type": "boolean"
+                        }
+                    },
+                    "400": {
+                        "description": "Неверный ID поста",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "401": {
+                        "description": "Не авторизован",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Ошибка сервера",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/likes/{id}": {
+            "get": {
+                "description": "Возвращает количество лайков указанного поста",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Лайки"
+                ],
+                "summary": "Получить количество лайков",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "ID поста (UUID)",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Количество лайков",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    "400": {
+                        "description": "Неверный ID поста",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Ошибка сервера",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/notifications": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Возвращает список всех уведомлений текущего пользователя",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Уведомления"
+                ],
+                "summary": "Получить уведомления",
+                "responses": {
+                    "200": {
+                        "description": "Список уведомлений",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/notification.Notification"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Не авторизован",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "Уведомления не найдены",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/notifications/count": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Возвращает количество непрочитанных уведомлений текущего пользователя",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Уведомления"
+                ],
+                "summary": "Получить количество непрочитанных уведомлений",
+                "responses": {
+                    "200": {
+                        "description": "Количество непрочитанных уведомлений",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    "401": {
+                        "description": "Не авторизован",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "Ошибка получения количества",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/notifications/read": {
+            "patch": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Отмечает все уведомления текущего пользователя как прочитанные",
+                "consumes": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Уведомления"
+                ],
+                "summary": "Отметить уведомления как прочитанные",
+                "responses": {
+                    "200": {
+                        "description": "Уведомления отмечены как прочитанные"
+                    },
+                    "401": {
+                        "description": "Не авторизован",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Ошибка сервера",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/unfollow/{id}": {
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Удаление подписки текущего пользователя на указанного пользователя",
+                "consumes": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Подписки"
+                ],
+                "summary": "Отписаться от пользователя",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "ID пользователя для отписки (UUID)",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Подписка удалена"
+                    },
+                    "400": {
+                        "description": "Неверный ID пользователя",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "401": {
+                        "description": "Не авторизован",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Ошибка сервера",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/unlike/{id}": {
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Удаление лайка текущего пользователя с указанного поста",
+                "consumes": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Лайки"
+                ],
+                "summary": "Убрать лайк",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "ID поста (UUID)",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Лайк удален"
+                    },
+                    "400": {
+                        "description": "Неверный ID поста",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "401": {
+                        "description": "Не авторизован",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Ошибка сервера",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/users/id/{id}": {
+            "get": {
+                "description": "Возвращает информацию о пользователе по его ID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Пользователи"
+                ],
+                "summary": "Получить пользователя по ID",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "ID пользователя (UUID)",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Информация о пользователе",
+                        "schema": {
+                            "$ref": "#/definitions/user.User"
+                        }
+                    },
+                    "400": {
+                        "description": "Неверный ID пользователя",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "Пользователь не найден",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/users/login": {
+            "post": {
+                "description": "Аутентификация пользователя и получение JWT токена",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Аутентификация"
+                ],
+                "summary": "Вход в систему",
+                "parameters": [
+                    {
+                        "description": "Данные для входа",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/auth.loginRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Токен доступа",
+                        "schema": {
+                            "$ref": "#/definitions/auth.loginResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Неверный формат запроса",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "401": {
+                        "description": "Неверные учетные данные",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/users/me": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Возвращает информацию о текущем аутентифицированном пользователе",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Пользователи"
+                ],
+                "summary": "Получить текущего пользователя",
+                "responses": {
+                    "200": {
+                        "description": "Информация о пользователе",
+                        "schema": {
+                            "$ref": "#/definitions/user.User"
+                        }
+                    },
+                    "401": {
+                        "description": "Не авторизован",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "Пользователь не найден",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/users/register": {
+            "post": {
+                "description": "Создание нового аккаунта пользователя",
+                "consumes": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Пользователи"
+                ],
+                "summary": "Регистрация нового пользователя",
+                "parameters": [
+                    {
+                        "description": "Данные пользователя",
+                        "name": "user",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/user.User"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Пользователь успешно создан"
+                    },
+                    "400": {
+                        "description": "Неверный формат запроса или username уже занят",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/users/setAvatar": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Загрузка аватара для текущего пользователя",
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "tags": [
+                    "Пользователи"
+                ],
+                "summary": "Загрузить аватар",
+                "parameters": [
+                    {
+                        "type": "file",
+                        "description": "Файл изображения",
+                        "name": "file",
+                        "in": "formData",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Аватар загружен"
+                    },
+                    "400": {
+                        "description": "Неверный файл",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "401": {
+                        "description": "Не авторизован",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Ошибка сервера",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/users/setPassword": {
+            "patch": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Изменение пароля текущего пользователя",
+                "consumes": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Пользователи"
+                ],
+                "summary": "Изменить пароль",
+                "parameters": [
+                    {
+                        "description": "Старый и новый пароль",
+                        "name": "dto",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/user.UpdatePasswordDTO"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "Пароль успешно изменен"
+                    },
+                    "400": {
+                        "description": "Неверный формат запроса или неверный старый пароль",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "401": {
+                        "description": "Не авторизован",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/users/update": {
+            "patch": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Обновление информации профиля текущего пользователя",
+                "consumes": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Пользователи"
+                ],
+                "summary": "Обновить профиль",
+                "parameters": [
+                    {
+                        "description": "Данные для обновления",
+                        "name": "dto",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/user.UserDTO"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Профиль обновлен"
+                    },
+                    "400": {
+                        "description": "Неверный формат запроса",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "401": {
+                        "description": "Не авторизован",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/users/username/{username}": {
+            "get": {
+                "description": "Возвращает информацию о пользователе по его username",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Пользователи"
+                ],
+                "summary": "Получить пользователя по username",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Username пользователя",
+                        "name": "username",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Информация о пользователе",
+                        "schema": {
+                            "$ref": "#/definitions/user.User"
+                        }
+                    },
+                    "400": {
+                        "description": "Username не указан",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "Пользователь не найден",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/ws/notifications": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Устанавливает WebSocket соединение для получения уведомлений в реальном времени. Требует заголовок Authorization: Bearer {token}",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Уведомления"
+                ],
+                "summary": "WebSocket соединение для уведомлений",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Bearer {token}",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "101": {
+                        "description": "Switching Protocols",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "401": {
+                        "description": "Не авторизован",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "auth.loginRequest": {
+            "description": "Данные для аутентификации пользователя",
+            "type": "object",
+            "properties": {
+                "password": {
+                    "description": "Пароль пользователя",
+                    "type": "string",
+                    "example": "password123"
+                },
+                "username": {
+                    "description": "Имя пользователя",
+                    "type": "string",
+                    "example": "john_doe"
+                }
+            }
+        },
+        "auth.loginResponse": {
+            "description": "Ответ после успешной аутентификации",
+            "type": "object",
+            "properties": {
+                "access_token": {
+                    "description": "JWT токен доступа",
+                    "type": "string",
+                    "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                }
+            }
+        },
+        "comment.Comment": {
+            "description": "Информация о комментарии",
+            "type": "object",
+            "properties": {
+                "author_id": {
+                    "description": "ID автора комментария",
+                    "type": "string",
+                    "example": "550e8400-e29b-41d4-a716-446655440000"
+                },
+                "content_id": {
+                    "description": "ID поста",
+                    "type": "string",
+                    "example": "550e8400-e29b-41d4-a716-446655440000"
+                },
+                "created_at": {
+                    "description": "Дата создания комментария",
+                    "type": "string",
+                    "example": "2024-01-01T00:00:00Z"
+                },
+                "id": {
+                    "description": "Уникальный идентификатор комментария",
+                    "type": "string",
+                    "example": "550e8400-e29b-41d4-a716-446655440000"
+                },
+                "parent_id": {
+                    "description": "ID родительского комментария (для ответов, опционально)",
+                    "type": "string",
+                    "example": "550e8400-e29b-41d4-a716-446655440000"
+                },
+                "text": {
+                    "description": "Текст комментария",
+                    "type": "string",
+                    "example": "Great post!"
+                }
+            }
+        },
+        "comment.CommentDTO": {
+            "description": "Данные для создания нового комментария",
+            "type": "object",
+            "properties": {
+                "content_id": {
+                    "description": "ID поста",
+                    "type": "string",
+                    "example": "550e8400-e29b-41d4-a716-446655440000"
+                },
+                "parent_id": {
+                    "description": "ID родительского комментария (для ответов, опционально)",
+                    "type": "string",
+                    "example": "550e8400-e29b-41d4-a716-446655440000"
+                },
+                "text": {
+                    "description": "Текст комментария",
+                    "type": "string",
+                    "example": "Great post!"
+                }
+            }
+        },
+        "content.Content": {
+            "description": "Описание поста",
+            "type": "object",
+            "properties": {
+                "author_id": {
+                    "description": "ID автора поста",
+                    "type": "string",
+                    "example": "550e8400-e29b-41d4-a716-446655440000"
+                },
+                "created_at": {
+                    "description": "Дата создания поста",
+                    "type": "string",
+                    "example": "2024-01-01T00:00:00Z"
+                },
+                "description": {
+                    "description": "Описание поста",
+                    "type": "string",
+                    "example": "Beautiful sunset!"
+                },
+                "id": {
+                    "description": "Уникальный идентификатор поста",
+                    "type": "string",
+                    "example": "550e8400-e29b-41d4-a716-446655440000"
+                },
+                "is_visible": {
+                    "description": "Видимость поста",
+                    "type": "boolean",
+                    "example": true
+                },
+                "media_urls": {
+                    "description": "Массив URL медиа-файлов",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "example": [
+                        "[/uploads/content/post1/image1.jpg]"
+                    ]
+                }
+            }
+        },
+        "content.ContentDTO": {
+            "description": "Данные для создания нового поста",
+            "type": "object",
+            "properties": {
+                "description": {
+                    "description": "Описание поста",
+                    "type": "string",
+                    "example": "Beautiful sunset!"
+                }
+            }
+        },
+        "content.UpdatePostDTO": {
+            "description": "Данные для обновления существующего поста",
+            "type": "object",
+            "properties": {
+                "description": {
+                    "description": "Описание поста (опционально)",
+                    "type": "string",
+                    "example": "Updated description"
+                },
+                "is_visible": {
+                    "description": "Видимость поста (опционально)",
+                    "type": "boolean",
+                    "example": true
+                },
+                "media_urls": {
+                    "description": "Массив URL медиа-файлов (опционально)",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "example": [
+                        "[/uploads/content/post1/image1.jpg]"
+                    ]
+                }
+            }
+        },
+        "follow.Follow": {
+            "description": "Информация о подписке",
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "description": "Дата создания подписки",
+                    "type": "string",
+                    "example": "2024-01-01T00:00:00Z"
+                },
+                "follower_id": {
+                    "description": "ID подписчика",
+                    "type": "string",
+                    "example": "550e8400-e29b-41d4-a716-446655440000"
+                },
+                "following_id": {
+                    "description": "ID пользователя, на которого подписались",
+                    "type": "string",
+                    "example": "550e8400-e29b-41d4-a716-446655440000"
+                },
+                "id": {
+                    "description": "Уникальный идентификатор подписки",
+                    "type": "string",
+                    "example": "550e8400-e29b-41d4-a716-446655440000"
+                }
+            }
+        },
+        "follow.FollowInfoDTO": {
+            "description": "Количество подписчиков и подписок пользователя",
+            "type": "object",
+            "properties": {
+                "followers_count": {
+                    "description": "Количество подписчиков",
+                    "type": "integer",
+                    "example": 100
+                },
+                "following_count": {
+                    "description": "Количество подписок",
+                    "type": "integer",
+                    "example": 50
+                }
+            }
+        },
+        "notification.Notification": {
+            "description": "Информация об уведомлении",
+            "type": "object",
+            "properties": {
+                "Actor": {
+                    "description": "ID пользователя, который выполнил действие",
+                    "type": "string",
+                    "example": "550e8400-e29b-41d4-a716-446655440000"
+                },
+                "CreatedAt": {
+                    "description": "Дата создания уведомления",
+                    "type": "string",
+                    "example": "2024-01-01T00:00:00Z"
+                },
+                "ID": {
+                    "description": "Уникальный идентификатор уведомления",
+                    "type": "string",
+                    "example": "550e8400-e29b-41d4-a716-446655440000"
+                },
+                "Read": {
+                    "description": "Прочитано ли уведомление",
+                    "type": "boolean",
+                    "example": false
+                },
+                "Recipient": {
+                    "description": "ID получателя уведомления",
+                    "type": "string",
+                    "example": "550e8400-e29b-41d4-a716-446655440000"
+                },
+                "TargetId": {
+                    "description": "ID целевого объекта (пост, комментарий и т.д.)",
+                    "type": "string",
+                    "example": "550e8400-e29b-41d4-a716-446655440000"
+                },
+                "Type": {
+                    "description": "Тип уведомления",
+                    "enum": [
+                        "LIKE",
+                        "COMMENT",
+                        "FOLLOW"
+                    ],
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/notification.NotificationType"
+                        }
+                    ],
+                    "example": "LIKE"
+                }
+            }
+        },
+        "notification.NotificationType": {
+            "type": "string",
+            "enum": [
+                "LIKE",
+                "COMMENT",
+                "FOLLOW"
+            ],
+            "x-enum-comments": {
+                "Comment": "Уведомление о комментарии",
+                "Follow": "Уведомление о подписке",
+                "Like": "Уведомление о лайке"
+            },
+            "x-enum-descriptions": [
+                "Уведомление о лайке",
+                "Уведомление о комментарии",
+                "Уведомление о подписке"
+            ],
+            "x-enum-varnames": [
+                "Like",
+                "Comment",
+                "Follow"
+            ]
+        },
+        "user.UpdatePasswordDTO": {
+            "description": "Данные для изменения пароля пользователя",
+            "type": "object",
+            "properties": {
+                "new_password": {
+                    "description": "Новый пароль",
+                    "type": "string",
+                    "example": "newpass123"
+                },
+                "old_password": {
+                    "description": "Текущий пароль",
+                    "type": "string",
+                    "example": "oldpass123"
+                }
+            }
+        },
+        "user.User": {
+            "description": "Информация о пользователе",
+            "type": "object",
+            "properties": {
+                "avatar_url": {
+                    "description": "URL аватара (опционально)",
+                    "type": "string",
+                    "example": "/uploads/avatars/avatar.jpg"
+                },
+                "created_at": {
+                    "description": "Дата создания аккаунта",
+                    "type": "string",
+                    "example": "2024-01-01T00:00:00Z"
+                },
+                "description": {
+                    "description": "Описание профиля (опционально)",
+                    "type": "string",
+                    "example": "Software developer"
+                },
+                "full_name": {
+                    "description": "Полное имя пользователя (опционально)",
+                    "type": "string",
+                    "example": "John Doe"
+                },
+                "id": {
+                    "description": "Уникальный идентификатор пользователя",
+                    "type": "string",
+                    "example": "550e8400-e29b-41d4-a716-446655440000"
+                },
+                "username": {
+                    "description": "Имя пользователя",
+                    "type": "string",
+                    "example": "john_doe"
+                }
+            }
+        },
+        "user.UserDTO": {
+            "description": "Данные для обновления профиля",
+            "type": "object",
+            "properties": {
+                "description": {
+                    "description": "Описание профиля (опционально)",
+                    "type": "string",
+                    "example": "Developer"
+                },
+                "full_name": {
+                    "description": "Полное имя (опционально)",
+                    "type": "string",
+                    "example": "John Doe"
+                },
+                "username": {
+                    "description": "Имя пользователя (опционально)",
+                    "type": "string",
+                    "example": "john_doe"
+                }
+            }
+        }
+    },
+    "securityDefinitions": {
+        "BearerAuth": {
+            "description": "Введите токен в формате: Bearer {token}",
+            "type": "apiKey",
+            "name": "Authorization",
+            "in": "header"
+        }
+    }
+}

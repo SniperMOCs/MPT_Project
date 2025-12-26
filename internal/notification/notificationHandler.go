@@ -25,6 +25,16 @@ func NewNotificationHandler(service NotificationService, hub *WebSocketHub) *Not
 	}
 }
 
+// @Summary      WebSocket соединение для уведомлений
+// @Description  Устанавливает WebSocket соединение для получения уведомлений в реальном времени. Требует заголовок Authorization: Bearer {token}
+// @Tags         Уведомления
+// @Accept       json
+// @Produce      json
+// @Security     BearerAuth
+// @Param        Authorization  header    string  true  "Bearer {token}"
+// @Success      101            {string}  string  "Switching Protocols"
+// @Failure      401            {string}  string  "Не авторизован"
+// @Router       /ws/notifications [get]
 func (h *NotificationHandler) ServeWS(w http.ResponseWriter, r *http.Request) {
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
@@ -42,6 +52,16 @@ func (h *NotificationHandler) ServeWS(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// @Summary      Получить уведомления
+// @Description  Возвращает список всех уведомлений текущего пользователя
+// @Tags         Уведомления
+// @Accept       json
+// @Produce      json
+// @Security     BearerAuth
+// @Success      200  {array}   notification.Notification  "Список уведомлений"
+// @Failure      401  {string}  string                       "Не авторизован"
+// @Failure      404  {string}  string                       "Уведомления не найдены"
+// @Router       /notifications [get]
 func (h *NotificationHandler) GetMy(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		w.WriteHeader(http.StatusMethodNotAllowed)
@@ -58,6 +78,15 @@ func (h *NotificationHandler) GetMy(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(list)
 }
 
+// @Summary      Отметить уведомления как прочитанные
+// @Description  Отмечает все уведомления текущего пользователя как прочитанные
+// @Tags         Уведомления
+// @Accept       json
+// @Security     BearerAuth
+// @Success      200  "Уведомления отмечены как прочитанные"
+// @Failure      401  {string}  string  "Не авторизован"
+// @Failure      500  {string}  string  "Ошибка сервера"
+// @Router       /notifications/read [patch]
 func (h *NotificationHandler) MarkAsRead(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPatch {
 		w.WriteHeader(http.StatusMethodNotAllowed)
@@ -73,6 +102,16 @@ func (h *NotificationHandler) MarkAsRead(w http.ResponseWriter, r *http.Request)
 	w.WriteHeader(http.StatusOK)
 }
 
+// @Summary      Получить количество непрочитанных уведомлений
+// @Description  Возвращает количество непрочитанных уведомлений текущего пользователя
+// @Tags         Уведомления
+// @Accept       json
+// @Produce      json
+// @Security     BearerAuth
+// @Success      200  {integer} int     "Количество непрочитанных уведомлений"
+// @Failure      401  {string}  string  "Не авторизован"
+// @Failure      404  {string}  string  "Ошибка получения количества"
+// @Router       /notifications/count [get]
 func (h *NotificationHandler) GetUnreadCount(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		w.WriteHeader(http.StatusMethodNotAllowed)

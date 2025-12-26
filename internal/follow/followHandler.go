@@ -19,6 +19,17 @@ func NewFollowHandler(followService FollowService) *FollowHandler {
 	}
 }
 
+// @Summary      Подписаться на пользователя
+// @Description  Создание подписки текущего пользователя на указанного пользователя
+// @Tags         Подписки
+// @Accept       json
+// @Security     BearerAuth
+// @Param        id   path      string  true  "ID пользователя для подписки (UUID)"
+// @Success      201  "Подписка создана"
+// @Failure      400  {string}  string  "Неверный ID пользователя"
+// @Failure      401  {string}  string  "Не авторизован"
+// @Failure      500  {string}  string  "Ошибка сервера"
+// @Router       /follow/{id} [post]
 func (h *FollowHandler) Create(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		w.WriteHeader(http.StatusMethodNotAllowed)
@@ -43,6 +54,17 @@ func (h *FollowHandler) Create(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusCreated)
 }
 
+// @Summary      Отписаться от пользователя
+// @Description  Удаление подписки текущего пользователя на указанного пользователя
+// @Tags         Подписки
+// @Accept       json
+// @Security     BearerAuth
+// @Param        id   path      string  true  "ID пользователя для отписки (UUID)"
+// @Success      200  "Подписка удалена"
+// @Failure      400  {string}  string  "Неверный ID пользователя"
+// @Failure      401  {string}  string  "Не авторизован"
+// @Failure      500  {string}  string  "Ошибка сервера"
+// @Router       /unfollow/{id} [delete]
 func (h *FollowHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodDelete {
 		w.WriteHeader(http.StatusMethodNotAllowed)
@@ -67,6 +89,16 @@ func (h *FollowHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
+// @Summary      Получить подписчиков пользователя
+// @Description  Возвращает список всех подписчиков указанного пользователя
+// @Tags         Подписки
+// @Accept       json
+// @Produce      json
+// @Param        id   path      string           true  "ID пользователя (UUID)"
+// @Success      200  {array}   follow.Follow   "Список подписчиков"
+// @Failure      400  {string}  string           "Неверный ID пользователя"
+// @Failure      500  {string}  string           "Ошибка сервера"
+// @Router       /followers/{id} [get]
 func (h *FollowHandler) GetFollowers(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		w.WriteHeader(http.StatusMethodNotAllowed)
@@ -89,6 +121,17 @@ func (h *FollowHandler) GetFollowers(w http.ResponseWriter, r *http.Request) {
 
 	json.NewEncoder(w).Encode(list)
 }
+
+// @Summary      Получить подписки пользователя
+// @Description  Возвращает список всех подписок указанного пользователя
+// @Tags         Подписки
+// @Accept       json
+// @Produce      json
+// @Param        id   path      string           true  "ID пользователя (UUID)"
+// @Success      200  {array}   follow.Follow   "Список подписок"
+// @Failure      400  {string}  string           "Неверный ID пользователя"
+// @Failure      500  {string}  string           "Ошибка сервера"
+// @Router       /following/{id} [get]
 func (h *FollowHandler) GetFollowing(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		w.WriteHeader(http.StatusMethodNotAllowed)
@@ -112,6 +155,16 @@ func (h *FollowHandler) GetFollowing(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(list)
 }
 
+// @Summary      Получить число подписок и подписчиков
+// @Description  Возвращает количество подписчиков и подписок указанного пользователя
+// @Tags         Подписки
+// @Accept       json
+// @Produce      json
+// @Param        id   path      string              true  "ID пользователя (UUID)"
+// @Success      200  {object}  follow.FollowInfoDTO  "Информация о подписках"
+// @Failure      400  {string}  string                "Неверный ID пользователя"
+// @Failure      500  {string}  string                "Ошибка сервера"
+// @Router       /follow/info/{id} [get]
 func (h *FollowHandler) FollowInfo(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		w.WriteHeader(http.StatusMethodNotAllowed)
@@ -144,6 +197,18 @@ func (h *FollowHandler) FollowInfo(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(info)
 }
 
+// @Summary      Проверить подписку
+// @Description  Проверяет, подписан ли текущий пользователь на указанного пользователя
+// @Tags         Подписки
+// @Accept       json
+// @Produce      json
+// @Security     BearerAuth
+// @Param        id   path      string  true  "ID пользователя (UUID)"
+// @Success      200  {boolean} bool    "Результат проверки"
+// @Failure      400  {string}  string  "Неверный ID пользователя"
+// @Failure      401  {string}  string  "Не авторизован"
+// @Failure      500  {string}  string  "Ошибка сервера"
+// @Router       /follower/{id} [get]
 func (h *FollowHandler) IsFollower(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		w.WriteHeader(http.StatusMethodNotAllowed)

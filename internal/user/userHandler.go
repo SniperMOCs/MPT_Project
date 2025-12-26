@@ -19,6 +19,14 @@ func NewUserHandler(userService UserService) *UserHandler {
 	}
 }
 
+// @Summary      Регистрация нового пользователя
+// @Description  Создание нового аккаунта пользователя
+// @Tags         Пользователи
+// @Accept       json
+// @Param        user  body      user.User  true  "Данные пользователя"
+// @Success      201   "Пользователь успешно создан"
+// @Failure      400   {string}  string     "Неверный формат запроса или username уже занят"
+// @Router       /users/register [post]
 func (h *UserHandler) HandleRegister(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		w.WriteHeader(http.StatusMethodNotAllowed)
@@ -39,6 +47,16 @@ func (h *UserHandler) HandleRegister(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusCreated)
 }
 
+// @Summary      Получить текущего пользователя
+// @Description  Возвращает информацию о текущем аутентифицированном пользователе
+// @Tags         Пользователи
+// @Accept       json
+// @Produce      json
+// @Security     BearerAuth
+// @Success      200  {object}  user.User  "Информация о пользователе"
+// @Failure      401  {string}  string     "Не авторизован"
+// @Failure      404  {string}  string     "Пользователь не найден"
+// @Router       /users/me [get]
 func (h *UserHandler) HandleMe(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		w.WriteHeader(http.StatusMethodNotAllowed)
@@ -58,6 +76,16 @@ func (h *UserHandler) HandleMe(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(u)
 }
 
+// @Summary      Обновить профиль
+// @Description  Обновление информации профиля текущего пользователя
+// @Tags         Пользователи
+// @Accept       json
+// @Security     BearerAuth
+// @Param        dto  body      user.UserDTO  true  "Данные для обновления"
+// @Success      200  "Профиль обновлен"
+// @Failure      400  {string}  string        "Неверный формат запроса"
+// @Failure      401  {string}  string        "Не авторизован"
+// @Router       /users/update [patch]
 func (h *UserHandler) HandleUpdate(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPatch {
 		w.WriteHeader(http.StatusMethodNotAllowed)
@@ -80,6 +108,16 @@ func (h *UserHandler) HandleUpdate(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
+// @Summary      Изменить пароль
+// @Description  Изменение пароля текущего пользователя
+// @Tags         Пользователи
+// @Accept       json
+// @Security     BearerAuth
+// @Param        dto  body      user.UpdatePasswordDTO  true  "Старый и новый пароль"
+// @Success      204  "Пароль успешно изменен"
+// @Failure      400  {string}  string                  "Неверный формат запроса или неверный старый пароль"
+// @Failure      401  {string}  string                  "Не авторизован"
+// @Router       /users/setPassword [patch]
 func (h *UserHandler) HandleSetPassword(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPatch {
 		w.WriteHeader(http.StatusMethodNotAllowed)
@@ -102,6 +140,16 @@ func (h *UserHandler) HandleSetPassword(w http.ResponseWriter, r *http.Request) 
 	w.WriteHeader(http.StatusNoContent)
 }
 
+// @Summary      Получить пользователя по ID
+// @Description  Возвращает информацию о пользователе по его ID
+// @Tags         Пользователи
+// @Accept       json
+// @Produce      json
+// @Param        id   path      string      true  "ID пользователя (UUID)"
+// @Success      200  {object}  user.User   "Информация о пользователе"
+// @Failure      400  {string}  string      "Неверный ID пользователя"
+// @Failure      404  {string}  string      "Пользователь не найден"
+// @Router       /users/id/{id} [get]
 func (h *UserHandler) HandleGetByID(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		w.WriteHeader(http.StatusMethodNotAllowed)
@@ -126,6 +174,16 @@ func (h *UserHandler) HandleGetByID(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(u)
 }
 
+// @Summary      Получить пользователя по username
+// @Description  Возвращает информацию о пользователе по его username
+// @Tags         Пользователи
+// @Accept       json
+// @Produce      json
+// @Param        username  path      string      true  "Username пользователя"
+// @Success      200       {object}  user.User   "Информация о пользователе"
+// @Failure      400       {string}  string      "Username не указан"
+// @Failure      404       {string}  string      "Пользователь не найден"
+// @Router       /users/username/{username} [get]
 func (h *UserHandler) HandleGetByUsername(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		w.WriteHeader(http.StatusMethodNotAllowed)
@@ -150,6 +208,17 @@ func (h *UserHandler) HandleGetByUsername(w http.ResponseWriter, r *http.Request
 	json.NewEncoder(w).Encode(u)
 }
 
+// @Summary      Загрузить аватар
+// @Description  Загрузка аватара для текущего пользователя
+// @Tags         Пользователи
+// @Accept       multipart/form-data
+// @Security     BearerAuth
+// @Param        file  formData  file    true  "Файл изображения"
+// @Success      200   "Аватар загружен"
+// @Failure      400   {string}  string  "Неверный файл"
+// @Failure      401   {string}  string  "Не авторизован"
+// @Failure      500   {string}  string  "Ошибка сервера"
+// @Router       /users/setAvatar [post]
 func (h *UserHandler) HandleUploadAvatar(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		w.WriteHeader(http.StatusMethodNotAllowed)

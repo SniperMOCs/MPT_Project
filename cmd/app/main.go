@@ -8,6 +8,9 @@ import (
 
 	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
+	httpSwagger "github.com/swaggo/http-swagger"
+
+	_ "github.com/SniperMOCs/MPT_Project/docs"
 
 	"github.com/SniperMOCs/MPT_Project/internal/auth"
 	"github.com/SniperMOCs/MPT_Project/internal/comment"
@@ -19,6 +22,22 @@ import (
 	"github.com/SniperMOCs/MPT_Project/internal/notification"
 	"github.com/SniperMOCs/MPT_Project/internal/user"
 )
+
+// @title 			Zapretgram Backend API
+// @version         1.0
+// @description     Backend-приложение на Go, реализующее функциональность социальной сети, аналогичной Instagram.
+// @description     Предоставляет REST API для управления пользователями, публикациями, комментариями, лайками, подписками и уведомлениями в реальном времени через WebSocket.
+
+// @contact.name   API Support
+// @contact.email  snipermocs@gmail.com
+
+// @host      localhost:8080
+// @BasePath  /api
+
+// @securityDefinitions.apikey BearerAuth
+// @in header
+// @name Authorization
+// @description Введите токен в формате: Bearer {token}
 
 func openDB(dsn string) (*sql.DB, error) {
 	log.Println(dsn)
@@ -140,6 +159,9 @@ func main() {
 
 	// WEBSOCKET
 	mux.Handle("/ws/notifications", auth.Middleware(jwtManager, cfg)(http.HandlerFunc(notificationHandler.ServeWS)))
+
+	// SWAGGER
+	mux.HandleFunc("/swagger/", httpSwagger.WrapHandler)
 
 	// Middleware
 	corsMux := cors.CORSHandler(mux)

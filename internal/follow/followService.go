@@ -5,6 +5,7 @@ import (
 	"errors"
 
 	"github.com/SniperMOCs/MPT_Project/internal/notification"
+	"github.com/SniperMOCs/MPT_Project/internal/user"
 	"github.com/google/uuid"
 )
 
@@ -42,11 +43,11 @@ func (s *followService) Exists(ctx context.Context, followerId uuid.UUID, follow
 	return s.repo.Exists(ctx, followerId, followingId)
 }
 
-func (s *followService) GetFollowers(ctx context.Context, userId uuid.UUID) ([]Follow, error) {
+func (s *followService) GetFollowers(ctx context.Context, userId uuid.UUID) ([]*user.User, error) {
 	return s.repo.GetFollowers(ctx, userId)
 }
 
-func (s *followService) GetFollowing(ctx context.Context, userId uuid.UUID) ([]Follow, error) {
+func (s *followService) GetFollowing(ctx context.Context, userId uuid.UUID) ([]*user.User, error) {
 	return s.repo.GetFollowing(ctx, userId)
 }
 

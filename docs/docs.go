@@ -303,6 +303,49 @@ const docTemplate = `{
                 }
             }
         },
+        "/content/subscriptions": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Возвращает посты от пользователей, на которых подписан текущий пользователь, отсортированные по дате создания (новые сначала)",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Контент"
+                ],
+                "summary": "Получить ленту подписок",
+                "responses": {
+                    "200": {
+                        "description": "Лента постов",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/content.Content"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Не авторизован",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Ошибка сервера",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
         "/content/update/{id}": {
             "patch": {
                 "security": [
@@ -628,7 +671,7 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/follow.Follow"
+                                "$ref": "#/definitions/user.User"
                             }
                         }
                     },
@@ -675,7 +718,7 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/follow.Follow"
+                                "$ref": "#/definitions/user.User"
                             }
                         }
                     },
@@ -1655,32 +1698,6 @@ const docTemplate = `{
                     "example": [
                         "[/uploads/content/post1/image1.jpg]"
                     ]
-                }
-            }
-        },
-        "follow.Follow": {
-            "description": "Информация о подписке",
-            "type": "object",
-            "properties": {
-                "created_at": {
-                    "description": "Дата создания подписки",
-                    "type": "string",
-                    "example": "2024-01-01T00:00:00Z"
-                },
-                "follower_id": {
-                    "description": "ID подписчика",
-                    "type": "string",
-                    "example": "550e8400-e29b-41d4-a716-446655440000"
-                },
-                "following_id": {
-                    "description": "ID пользователя, на которого подписались",
-                    "type": "string",
-                    "example": "550e8400-e29b-41d4-a716-446655440000"
-                },
-                "id": {
-                    "description": "Уникальный идентификатор подписки",
-                    "type": "string",
-                    "example": "550e8400-e29b-41d4-a716-446655440000"
                 }
             }
         },

@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"time"
 
+	"github.com/SniperMOCs/MPT_Project/internal/user"
 	"github.com/google/uuid"
 )
 
@@ -53,12 +54,13 @@ func (r *followRepository) Exists(ctx context.Context, followerId uuid.UUID, fol
 	return exists, err
 }
 
-func (r *followRepository) GetFollowers(ctx context.Context, userId uuid.UUID) ([]Follow, error) {
+func (r *followRepository) GetFollowers(ctx context.Context, userId uuid.UUID) ([]*user.User, error) {
 	query := `
-		SELECT id, follower_id, following_id, created_at
-		FROM follows
-		WHERE following_id = $1
-		ORDER BY created_at DESC
+		SELECT u.id, u.username, u.password, u.full_name, u.avatar_url, u.description, u.created_at
+		FROM users u
+		INNER JOIN follows f ON u.id = f.follower_id
+		WHERE f.following_id = $1
+		ORDER BY f.created_at DESC
 	`
 
 	rows, err := r.db.QueryContext(ctx, query, userId)
@@ -67,31 +69,35 @@ func (r *followRepository) GetFollowers(ctx context.Context, userId uuid.UUID) (
 	}
 	defer rows.Close()
 
-	var res []Follow
+	var res []*user.User
 	for rows.Next() {
-		var f Follow
+		var u user.User
 
 		if err := rows.Scan(
-			&f.ID,
-			&f.FollowerId,
-			&f.FollowingId,
-			&f.CreatedAt,
+			&u.ID,
+			&u.Username,
+			&u.Password,
+			&u.FullName,
+			&u.AvatarURL,
+			&u.Description,
+			&u.CreatedAt,
 		); err != nil {
 			return nil, err
 		}
 
-		res = append(res, f)
+		res = append(res, &u)
 	}
 
 	return res, nil
 }
 
-func (r *followRepository) GetFollowing(ctx context.Context, userId uuid.UUID) ([]Follow, error) {
+func (r *followRepository) GetFollowing(ctx context.Context, userId uuid.UUID) ([]*user.User, error) {
 	query := `
-		SELECT id, follower_id, following_id, created_at
-		FROM follows
-		WHERE follower_id = $1
-		ORDER BY created_at DESC
+		SELECT u.id, u.username, u.password, u.full_name, u.avatar_url, u.description, u.created_at
+		FROM users u
+		INNER JOIN follows f ON u.id = f.following_id
+		WHERE f.follower_id = $1
+		ORDER BY f.created_at DESC
 	`
 
 	rows, err := r.db.QueryContext(ctx, query, userId)
@@ -100,20 +106,23 @@ func (r *followRepository) GetFollowing(ctx context.Context, userId uuid.UUID) (
 	}
 	defer rows.Close()
 
-	var res []Follow
+	var res []*user.User
 	for rows.Next() {
-		var f Follow
+		var u user.User
 
 		if err := rows.Scan(
-			&f.ID,
-			&f.FollowerId,
-			&f.FollowingId,
-			&f.CreatedAt,
+			&u.ID,
+			&u.Username,
+			&u.Password,
+			&u.FullName,
+			&u.AvatarURL,
+			&u.Description,
+			&u.CreatedAt,
 		); err != nil {
 			return nil, err
 		}
 
-		res = append(res, f)
+		res = append(res, &u)
 	}
 
 	return res, nil

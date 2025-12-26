@@ -126,6 +126,7 @@ func main() {
 	// CONTENT
 	mux.HandleFunc("/api/content/{id}", contentHandler.GetByID)
 	mux.HandleFunc("/api/content/user/{id}", contentHandler.GetByAuthor)
+	mux.Handle("/api/content/subscriptions", auth.Middleware(jwtManager, cfg)(http.HandlerFunc(contentHandler.GetSubscriptions)))
 	mux.Handle("/api/content/create", auth.Middleware(jwtManager, cfg)(http.HandlerFunc(contentHandler.Create)))
 	mux.Handle("/api/content/delete/{id}", auth.Middleware(jwtManager, cfg)(http.HandlerFunc(contentHandler.Delete)))
 	mux.Handle("/api/content/update/{id}", auth.Middleware(jwtManager, cfg)(http.HandlerFunc(contentHandler.Update)))

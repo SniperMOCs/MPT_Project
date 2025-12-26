@@ -233,3 +233,31 @@ func (h *ContentHandler) UploadMedia(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusCreated)
 }
+
+// @Summary      Получить ленту подписок
+// @Description  Возвращает посты от пользователей, на которых подписан текущий пользователь, отсортированные по дате создания (новые сначала)
+// @Tags         Контент
+// @Accept       json
+// @Produce      json
+// @Security     BearerAuth
+// @Success      200  {array}   content.Content  "Лента постов"
+// @Failure      401  {string}  string           "Не авторизован"
+// @Failure      500  {string}  string           "Ошибка сервера"
+// @Router       /content/subscriptions [get]
+func (h *ContentHandler) GetSubscriptions(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		return
+	}
+
+	userID := r.Context().Value(contextkeys.UserIDKey).(uuid.UUID)
+
+	list, err := h.contentService.GetByFollowing(r.Context(), userID)
+	if err != nil {
+		http.Error(w, "cannot get subscriptions", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(list)
+}

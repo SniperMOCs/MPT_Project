@@ -95,7 +95,7 @@ func (h *FollowHandler) Delete(w http.ResponseWriter, r *http.Request) {
 // @Accept       json
 // @Produce      json
 // @Param        id   path      string           true  "ID пользователя (UUID)"
-// @Success      200  {array}   follow.Follow   "Список подписчиков"
+// @Success      200  {array}   user.User        "Список подписчиков"
 // @Failure      400  {string}  string           "Неверный ID пользователя"
 // @Failure      500  {string}  string           "Ошибка сервера"
 // @Router       /followers/{id} [get]
@@ -119,6 +119,7 @@ func (h *FollowHandler) GetFollowers(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(list)
 }
 
@@ -128,7 +129,7 @@ func (h *FollowHandler) GetFollowers(w http.ResponseWriter, r *http.Request) {
 // @Accept       json
 // @Produce      json
 // @Param        id   path      string           true  "ID пользователя (UUID)"
-// @Success      200  {array}   follow.Follow   "Список подписок"
+// @Success      200  {array}   user.User        "Список подписок"
 // @Failure      400  {string}  string           "Неверный ID пользователя"
 // @Failure      500  {string}  string           "Ошибка сервера"
 // @Router       /following/{id} [get]
@@ -152,6 +153,7 @@ func (h *FollowHandler) GetFollowing(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(list)
 }
 

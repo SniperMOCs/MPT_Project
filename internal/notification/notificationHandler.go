@@ -58,7 +58,7 @@ func (h *NotificationHandler) ServeWS(w http.ResponseWriter, r *http.Request) {
 // @Accept       json
 // @Produce      json
 // @Security     BearerAuth
-// @Success      200  {array}   notification.Notification  "Список уведомлений"
+// @Success      200  {array}   notification.NotificationResponse  "Список уведомлений"
 // @Failure      401  {string}  string                       "Не авторизован"
 // @Failure      404  {string}  string                       "Уведомления не найдены"
 // @Router       /notifications [get]

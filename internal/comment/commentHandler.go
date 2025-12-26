@@ -86,7 +86,7 @@ func (h *CommentHandler) Delete(w http.ResponseWriter, r *http.Request) {
 // @Accept       json
 // @Produce      json
 // @Param        id   path      string            true  "ID поста (UUID)"
-// @Success      200  {array}   comment.Comment  "Список комментариев"
+// @Success      200  {array}   comment.CommentResponse  "Список комментариев"
 // @Failure      400  {string}  string           "Неверный ID поста"
 // @Failure      500  {string}  string           "Ошибка сервера"
 // @Router       /comment/content/{id} [get]

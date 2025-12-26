@@ -41,7 +41,7 @@ func (s *commentService) Create(ctx context.Context, authorId uuid.UUID, parentI
 	if err != nil {
 		return err
 	}
-	s.ns.Notify(ctx, authorId, c.AuthorId, c.ID, notification.Comment)
+	s.ns.Notify(ctx, authorId, c.Author.ID, c.ID, notification.Comment)
 	if comment.ParentId != nil {
 		parentComment, err := s.repo.GetById(ctx, *comment.ParentId)
 		if err != nil {
@@ -63,6 +63,6 @@ func (s *commentService) Delete(ctx context.Context, id uuid.UUID, authorId uuid
 	return s.repo.Delete(ctx, id)
 }
 
-func (s *commentService) GetByContentId(ctx context.Context, contentID uuid.UUID) ([]Comment, error) {
+func (s *commentService) GetByContentId(ctx context.Context, contentID uuid.UUID) ([]CommentResponse, error) {
 	return s.repo.GetByContentId(ctx, contentID)
 }

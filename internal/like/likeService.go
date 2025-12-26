@@ -40,7 +40,7 @@ func (s *likeService) Create(ctx context.Context, userId uuid.UUID, contentId uu
 	if err := s.repo.Create(ctx, userId, contentId); err != nil {
 		return err
 	}
-	s.notificationService.Notify(ctx, userId, c.AuthorId, c.ID, notification.Like)
+	s.notificationService.Notify(ctx, userId, c.Author.ID, c.ID, notification.Like)
 	return nil
 }
 

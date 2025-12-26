@@ -56,7 +56,7 @@ func (h *ContentHandler) Create(w http.ResponseWriter, r *http.Request) {
 // @Accept       json
 // @Produce      json
 // @Param        id   path      string         true  "ID поста (UUID)"
-// @Success      200  {object}  content.Content  "Информация о посте"
+// @Success      200  {object}  content.ContentResponse  "Информация о посте"
 // @Failure      400  {string}  string         "Неверный ID поста"
 // @Failure      404  {string}  string         "Пост не найден"
 // @Router       /content/{id} [get]
@@ -74,7 +74,7 @@ func (h *ContentHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 
 	c, err := h.contentService.GetByID(r.Context(), id)
 	if err != nil {
-		http.Error(w, "content not found", http.StatusNotFound)
+		http.Error(w, err.Error(), http.StatusNotFound)
 		return
 	}
 
@@ -88,7 +88,7 @@ func (h *ContentHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 // @Accept       json
 // @Produce      json
 // @Param        id   path      string           true  "ID пользователя (UUID)"
-// @Success      200  {array}   content.Content  "Список постов"
+// @Success      200  {array}   content.ContentResponse  "Список постов"
 // @Failure      400  {string}  string           "Неверный ID пользователя"
 // @Failure      500  {string}  string           "Ошибка сервера"
 // @Router       /content/user/{id} [get]
@@ -240,7 +240,7 @@ func (h *ContentHandler) UploadMedia(w http.ResponseWriter, r *http.Request) {
 // @Accept       json
 // @Produce      json
 // @Security     BearerAuth
-// @Success      200  {array}   content.Content  "Лента постов"
+// @Success      200  {array}   content.ContentResponse  "Лента постов"
 // @Failure      401  {string}  string           "Не авторизован"
 // @Failure      500  {string}  string           "Ошибка сервера"
 // @Router       /content/subscriptions [get]

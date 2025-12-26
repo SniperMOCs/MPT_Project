@@ -91,7 +91,7 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/comment.Comment"
+                                "$ref": "#/definitions/comment.CommentResponse"
                             }
                         }
                     },
@@ -327,7 +327,7 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/content.Content"
+                                "$ref": "#/definitions/content.ContentResponse"
                             }
                         }
                     },
@@ -432,7 +432,7 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/content.Content"
+                                "$ref": "#/definitions/content.ContentResponse"
                             }
                         }
                     },
@@ -477,7 +477,7 @@ const docTemplate = `{
                     "200": {
                         "description": "Информация о посте",
                         "schema": {
-                            "$ref": "#/definitions/content.Content"
+                            "$ref": "#/definitions/content.ContentResponse"
                         }
                     },
                     "400": {
@@ -909,7 +909,7 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/notification.Notification"
+                                "$ref": "#/definitions/notification.NotificationResponse"
                             }
                         }
                     },
@@ -1566,14 +1566,38 @@ const docTemplate = `{
                 }
             }
         },
-        "comment.Comment": {
-            "description": "Информация о комментарии",
+        "comment.CommentDTO": {
+            "description": "Данные для создания нового комментария",
             "type": "object",
             "properties": {
-                "author_id": {
-                    "description": "ID автора комментария",
+                "content_id": {
+                    "description": "ID поста",
                     "type": "string",
                     "example": "550e8400-e29b-41d4-a716-446655440000"
+                },
+                "parent_id": {
+                    "description": "ID родительского комментария (для ответов, опционально)",
+                    "type": "string",
+                    "example": "550e8400-e29b-41d4-a716-446655440000"
+                },
+                "text": {
+                    "description": "Текст комментария",
+                    "type": "string",
+                    "example": "Great post!"
+                }
+            }
+        },
+        "comment.CommentResponse": {
+            "description": "Данные для отображения комментария и его автора",
+            "type": "object",
+            "properties": {
+                "author": {
+                    "description": "Автор комментария",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/content.ContentAuthor"
+                        }
+                    ]
                 },
                 "content_id": {
                     "description": "ID поста",
@@ -1602,35 +1626,49 @@ const docTemplate = `{
                 }
             }
         },
-        "comment.CommentDTO": {
-            "description": "Данные для создания нового комментария",
+        "content.ContentAuthor": {
+            "description": "Данные для отображения пользователя как автора поста, комментария или уведомления",
             "type": "object",
             "properties": {
-                "content_id": {
-                    "description": "ID поста",
+                "avatar_url": {
+                    "description": "URL аватара автора",
+                    "type": "string",
+                    "example": "/uploads/avatars/john.jpg"
+                },
+                "id": {
+                    "description": "ID автора",
                     "type": "string",
                     "example": "550e8400-e29b-41d4-a716-446655440000"
                 },
-                "parent_id": {
-                    "description": "ID родительского комментария (для ответов, опционально)",
+                "username": {
+                    "description": "Username автора",
                     "type": "string",
-                    "example": "550e8400-e29b-41d4-a716-446655440000"
-                },
-                "text": {
-                    "description": "Текст комментария",
-                    "type": "string",
-                    "example": "Great post!"
+                    "example": "john_doe"
                 }
             }
         },
-        "content.Content": {
-            "description": "Описание поста",
+        "content.ContentDTO": {
+            "description": "Данные для создания нового поста",
             "type": "object",
             "properties": {
-                "author_id": {
-                    "description": "ID автора поста",
+                "description": {
+                    "description": "Описание поста",
                     "type": "string",
-                    "example": "550e8400-e29b-41d4-a716-446655440000"
+                    "example": "Beautiful sunset!"
+                }
+            }
+        },
+        "content.ContentResponse": {
+            "description": "Данные для отображения поста и его автора",
+            "type": "object",
+            "properties": {
+                "author": {
+                    "description": "Автор поста",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/content.ContentAuthor"
+                        }
+                    ]
                 },
                 "created_at": {
                     "description": "Дата создания поста",
@@ -1661,17 +1699,6 @@ const docTemplate = `{
                     "example": [
                         "[/uploads/content/post1/image1.jpg]"
                     ]
-                }
-            }
-        },
-        "content.ContentDTO": {
-            "description": "Данные для создания нового поста",
-            "type": "object",
-            "properties": {
-                "description": {
-                    "description": "Описание поста",
-                    "type": "string",
-                    "example": "Beautiful sunset!"
                 }
             }
         },
@@ -1717,15 +1744,10 @@ const docTemplate = `{
                 }
             }
         },
-        "notification.Notification": {
-            "description": "Информация об уведомлении",
+        "notification.NotificationResponse": {
+            "description": "Данные для отображения уведомления и его автора",
             "type": "object",
             "properties": {
-                "Actor": {
-                    "description": "ID пользователя, который выполнил действие",
-                    "type": "string",
-                    "example": "550e8400-e29b-41d4-a716-446655440000"
-                },
                 "CreatedAt": {
                     "description": "Дата создания уведомления",
                     "type": "string",
@@ -1764,6 +1786,14 @@ const docTemplate = `{
                         }
                     ],
                     "example": "LIKE"
+                },
+                "author": {
+                    "description": "Пользователь, действия которого вызвали уведомление",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/content.ContentAuthor"
+                        }
+                    ]
                 }
             }
         },

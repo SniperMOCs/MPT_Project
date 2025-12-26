@@ -34,15 +34,15 @@ func (s *contentService) Create(ctx context.Context, description string, authorI
 	return s.repo.Create(ctx, content)
 }
 
-func (s *contentService) GetByID(ctx context.Context, id uuid.UUID) (*Content, error) {
+func (s *contentService) GetByID(ctx context.Context, id uuid.UUID) (*ContentResponse, error) {
 	return s.repo.GetByID(ctx, id)
 }
 
-func (s *contentService) GetByAuthor(ctx context.Context, authorId uuid.UUID) ([]Content, error) {
+func (s *contentService) GetByAuthor(ctx context.Context, authorId uuid.UUID) ([]ContentResponse, error) {
 	return s.repo.GetByAuthor(ctx, authorId)
 }
 
-func (s *contentService) GetByFollowing(ctx context.Context, userId uuid.UUID) ([]Content, error) {
+func (s *contentService) GetByFollowing(ctx context.Context, userId uuid.UUID) ([]ContentResponse, error) {
 	return s.repo.GetByFollowing(ctx, userId)
 }
 
@@ -51,7 +51,7 @@ func (s *contentService) Delete(ctx context.Context, id uuid.UUID, userId uuid.U
 	if err != nil {
 		return errors.New("content not found")
 	}
-	if c.AuthorId != userId {
+	if c.Author.ID != userId {
 		return errors.New("forbidden")
 	}
 	return s.repo.Delete(ctx, id)
@@ -62,7 +62,7 @@ func (s *contentService) Update(ctx context.Context, description *string, isVisi
 	if err != nil {
 		return errors.New("content not found")
 	}
-	if c.AuthorId != userId {
+	if c.Author.ID != userId {
 		return errors.New("forbidden")
 	}
 
@@ -98,7 +98,7 @@ func (s *contentService) UploadMedia(ctx context.Context, contentId uuid.UUID, u
 	if err != nil {
 		return errors.New("content not found")
 	}
-	if c.AuthorId != userId {
+	if c.Author.ID != userId {
 		return errors.New("forbidden")
 	}
 

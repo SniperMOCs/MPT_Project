@@ -41,7 +41,7 @@ func (s *notificationService) Notify(ctx context.Context, actor uuid.UUID, recip
 	return nil
 }
 
-func (s *notificationService) GetByRecipient(ctx context.Context, userId uuid.UUID) ([]Notification, error) {
+func (s *notificationService) GetByRecipient(ctx context.Context, userId uuid.UUID) ([]NotificationResponse, error) {
 	return s.repo.GetByRecipient(ctx, userId)
 }
 

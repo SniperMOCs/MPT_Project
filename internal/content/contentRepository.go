@@ -36,21 +36,25 @@ func (r *contentRepository) Create(ctx context.Context, c *Content) error {
 	return err
 }
 
-func (r *contentRepository) GetByID(ctx context.Context, id uuid.UUID) (*Content, error) {
+func (r *contentRepository) GetByID(ctx context.Context, id uuid.UUID) (*ContentResponse, error) {
 	row := r.db.QueryRowContext(ctx, `
-		SELECT id, author_id, description, media_urls, created_at, is_visible
-		FROM contents WHERE id=$1
+		SELECT c.id, c.description, c.media_urls, c.created_at, c.is_visible, c.author_id, u.username, u.avatar_url
+		FROM contents c
+		INNER JOIN users u ON u.id = c.author_id
+		WHERE c.id=$1
 	`, id)
 
-	var c Content
+	var c ContentResponse
 
 	err := row.Scan(
 		&c.ID,
-		&c.AuthorId,
 		&c.Description,
 		pq.Array(&c.MediaURLs),
 		&c.CreatedAt,
 		&c.IsVisible,
+		&c.Author.ID,
+		&c.Author.Username,
+		&c.Author.AvatarURL,
 	)
 
 	if err != nil {
@@ -60,10 +64,11 @@ func (r *contentRepository) GetByID(ctx context.Context, id uuid.UUID) (*Content
 	return &c, nil
 }
 
-func (r *contentRepository) GetByAuthor(ctx context.Context, authorId uuid.UUID) ([]Content, error) {
+func (r *contentRepository) GetByAuthor(ctx context.Context, authorId uuid.UUID) ([]ContentResponse, error) {
 	query := `
-		SELECT id, author_id, description, media_urls, created_at, is_visible
-		FROM contents
+		SELECT c.id,c.description, c.media_urls, c.created_at, c.is_visible, c.author_id, u.username, u.avatar_url
+		FROM contents c
+		INNER JOIN users u ON u.id = c.author_id
 		WHERE author_id = $1
 		ORDER BY created_at DESC
 	`
@@ -74,17 +79,19 @@ func (r *contentRepository) GetByAuthor(ctx context.Context, authorId uuid.UUID)
 	}
 	defer rows.Close()
 
-	var res []Content
+	var res []ContentResponse
 	for rows.Next() {
-		var c Content
+		var c ContentResponse
 
 		if err := rows.Scan(
 			&c.ID,
-			&c.AuthorId,
 			&c.Description,
 			pq.Array(&c.MediaURLs),
 			&c.CreatedAt,
 			&c.IsVisible,
+			&c.Author.ID,
+			&c.Author.Username,
+			&c.Author.AvatarURL,
 		); err != nil {
 			return nil, err
 		}
@@ -95,11 +102,12 @@ func (r *contentRepository) GetByAuthor(ctx context.Context, authorId uuid.UUID)
 	return res, nil
 }
 
-func (r *contentRepository) GetByFollowing(ctx context.Context, userId uuid.UUID) ([]Content, error) {
+func (r *contentRepository) GetByFollowing(ctx context.Context, userId uuid.UUID) ([]ContentResponse, error) {
 	query := `
-		SELECT c.id, c.author_id, c.description, c.media_urls, c.created_at, c.is_visible
+		SELECT c.id, c.description, c.media_urls, c.created_at, c.is_visible, c.author_id, u.username, u.avatar_url
 		FROM contents c
 		INNER JOIN follows f ON c.author_id = f.following_id
+		INNER JOIN users u ON c.author_id = u.id
 		WHERE f.follower_id = $1 AND c.is_visible = true
 		ORDER BY c.created_at DESC
 	`
@@ -110,17 +118,19 @@ func (r *contentRepository) GetByFollowing(ctx context.Context, userId uuid.UUID
 	}
 	defer rows.Close()
 
-	var res []Content
+	var res []ContentResponse
 	for rows.Next() {
-		var c Content
+		var c ContentResponse
 
 		if err := rows.Scan(
 			&c.ID,
-			&c.AuthorId,
 			&c.Description,
 			pq.Array(&c.MediaURLs),
 			&c.CreatedAt,
 			&c.IsVisible,
+			&c.Author.ID,
+			&c.Author.Username,
+			&c.Author.AvatarURL,
 		); err != nil {
 			return nil, err
 		}

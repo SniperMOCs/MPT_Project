@@ -20,13 +20,29 @@ definitions:
         example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
         type: string
     type: object
-  comment.Comment:
-    description: Информация о комментарии
+  comment.CommentDTO:
+    description: Данные для создания нового комментария
     properties:
-      author_id:
-        description: ID автора комментария
+      content_id:
+        description: ID поста
         example: 550e8400-e29b-41d4-a716-446655440000
         type: string
+      parent_id:
+        description: ID родительского комментария (для ответов, опционально)
+        example: 550e8400-e29b-41d4-a716-446655440000
+        type: string
+      text:
+        description: Текст комментария
+        example: Great post!
+        type: string
+    type: object
+  comment.CommentResponse:
+    description: Данные для отображения комментария и его автора
+    properties:
+      author:
+        allOf:
+        - $ref: '#/definitions/content.ContentAuthor'
+        description: Автор комментария
       content_id:
         description: ID поста
         example: 550e8400-e29b-41d4-a716-446655440000
@@ -48,29 +64,38 @@ definitions:
         example: Great post!
         type: string
     type: object
-  comment.CommentDTO:
-    description: Данные для создания нового комментария
+  content.ContentAuthor:
+    description: Данные для отображения пользователя как автора поста, комментария
+      или уведомления
     properties:
-      content_id:
-        description: ID поста
+      avatar_url:
+        description: URL аватара автора
+        example: /uploads/avatars/john.jpg
+        type: string
+      id:
+        description: ID автора
         example: 550e8400-e29b-41d4-a716-446655440000
         type: string
-      parent_id:
-        description: ID родительского комментария (для ответов, опционально)
-        example: 550e8400-e29b-41d4-a716-446655440000
-        type: string
-      text:
-        description: Текст комментария
-        example: Great post!
+      username:
+        description: Username автора
+        example: john_doe
         type: string
     type: object
-  content.Content:
-    description: Описание поста
+  content.ContentDTO:
+    description: Данные для создания нового поста
     properties:
-      author_id:
-        description: ID автора поста
-        example: 550e8400-e29b-41d4-a716-446655440000
+      description:
+        description: Описание поста
+        example: Beautiful sunset!
         type: string
+    type: object
+  content.ContentResponse:
+    description: Данные для отображения поста и его автора
+    properties:
+      author:
+        allOf:
+        - $ref: '#/definitions/content.ContentAuthor'
+        description: Автор поста
       created_at:
         description: Дата создания поста
         example: "2024-01-01T00:00:00Z"
@@ -94,14 +119,6 @@ definitions:
         items:
           type: string
         type: array
-    type: object
-  content.ContentDTO:
-    description: Данные для создания нового поста
-    properties:
-      description:
-        description: Описание поста
-        example: Beautiful sunset!
-        type: string
     type: object
   content.UpdatePostDTO:
     description: Данные для обновления существующего поста
@@ -134,13 +151,9 @@ definitions:
         example: 50
         type: integer
     type: object
-  notification.Notification:
-    description: Информация об уведомлении
+  notification.NotificationResponse:
+    description: Данные для отображения уведомления и его автора
     properties:
-      Actor:
-        description: ID пользователя, который выполнил действие
-        example: 550e8400-e29b-41d4-a716-446655440000
-        type: string
       CreatedAt:
         description: Дата создания уведомления
         example: "2024-01-01T00:00:00Z"
@@ -170,6 +183,10 @@ definitions:
         - COMMENT
         - FOLLOW
         example: LIKE
+      author:
+        allOf:
+        - $ref: '#/definitions/content.ContentAuthor'
+        description: Пользователь, действия которого вызвали уведомление
     type: object
   notification.NotificationType:
     enum:
@@ -312,7 +329,7 @@ paths:
           description: Список комментариев
           schema:
             items:
-              $ref: '#/definitions/comment.Comment'
+              $ref: '#/definitions/comment.CommentResponse'
             type: array
         "400":
           description: Неверный ID поста
@@ -369,7 +386,7 @@ paths:
         "200":
           description: Информация о посте
           schema:
-            $ref: '#/definitions/content.Content'
+            $ref: '#/definitions/content.ContentResponse'
         "400":
           description: Неверный ID поста
           schema:
@@ -489,7 +506,7 @@ paths:
           description: Лента постов
           schema:
             items:
-              $ref: '#/definitions/content.Content'
+              $ref: '#/definitions/content.ContentResponse'
             type: array
         "401":
           description: Не авторизован
@@ -559,7 +576,7 @@ paths:
           description: Список постов
           schema:
             items:
-              $ref: '#/definitions/content.Content'
+              $ref: '#/definitions/content.ContentResponse'
             type: array
         "400":
           description: Неверный ID пользователя
@@ -836,7 +853,7 @@ paths:
           description: Список уведомлений
           schema:
             items:
-              $ref: '#/definitions/notification.Notification'
+              $ref: '#/definitions/notification.NotificationResponse'
             type: array
         "401":
           description: Не авторизован

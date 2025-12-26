@@ -44,10 +44,11 @@ func (r *commentRepository) Delete(ctx context.Context, id uuid.UUID) error {
 	return err
 }
 
-func (r *commentRepository) GetByContentId(ctx context.Context, contentID uuid.UUID) ([]Comment, error) {
+func (r *commentRepository) GetByContentId(ctx context.Context, contentID uuid.UUID) ([]CommentResponse, error) {
 	query := `
-		SELECT id, author_id, parent_id, content_id, text, created_at
-		FROM comments
+		SELECT c.id, c.parent_id, c.content_id, c.text, c.created_at, c.author_id, u.username, u.avatar_url
+		FROM comments c
+		INNER JOIN users u ON u.id = c.author_id 
 		WHERE content_id = $1
 		ORDER BY created_at ASC
 	`
@@ -58,17 +59,19 @@ func (r *commentRepository) GetByContentId(ctx context.Context, contentID uuid.U
 	}
 	defer rows.Close()
 
-	var res []Comment
+	var res []CommentResponse
 	for rows.Next() {
-		var c Comment
+		var c CommentResponse
 
 		if err := rows.Scan(
 			&c.ID,
-			&c.AuthorId,
 			&c.ParentId,
 			&c.ContentId,
 			&c.Text,
 			&c.CreatedAt,
+			&c.Author.ID,
+			&c.Author.Username,
+			&c.Author.AvatarURL,
 		); err != nil {
 			return nil, err
 		}
@@ -81,8 +84,8 @@ func (r *commentRepository) GetByContentId(ctx context.Context, contentID uuid.U
 
 func (r *commentRepository) GetById(ctx context.Context, id uuid.UUID) (*Comment, error) {
 	query := `
-		SELECT id, author_id, parent_id, content_id, text, created_at
-		FROM comments
+		SELECT c.id, c.parent_id, c.content_id, c.text, c.created_at, c.author_id
+		FROM comments c
 		WHERE id = $1
 	`
 
@@ -91,11 +94,11 @@ func (r *commentRepository) GetById(ctx context.Context, id uuid.UUID) (*Comment
 
 	err := row.Scan(
 		&c.ID,
-		&c.AuthorId,
 		&c.ParentId,
 		&c.ContentId,
 		&c.Text,
 		&c.CreatedAt,
+		&c.AuthorId,
 	)
 
 	if err != nil {

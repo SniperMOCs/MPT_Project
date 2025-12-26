@@ -35,11 +35,12 @@ func (r *notificationRepository) Create(ctx context.Context, n *Notification) er
 	return err
 }
 
-func (r *notificationRepository) GetByRecipient(ctx context.Context, userId uuid.UUID) ([]Notification, error) {
+func (r *notificationRepository) GetByRecipient(ctx context.Context, userId uuid.UUID) ([]NotificationResponse, error) {
 	query := `
-		SELECT id, recipient_id, target_id, type, created_at, actor_id, read
-		FROM notifications
-		WHERE recipient_id = $1
+		SELECT n.id, n.recipient_id, n.target_id, n.type, n.created_at, n.read, n.actor_id, u.username, u.avatar_url
+		FROM notifications n
+		INNER JOIN users u ON u.id = n.actor_id
+		WHERE n.recipient_id = $1
 		ORDER BY created_at DESC
 	`
 
@@ -49,9 +50,9 @@ func (r *notificationRepository) GetByRecipient(ctx context.Context, userId uuid
 	}
 	defer rows.Close()
 
-	var res []Notification
+	var res []NotificationResponse
 	for rows.Next() {
-		var n Notification
+		var n NotificationResponse
 
 		if err := rows.Scan(
 			&n.ID,
@@ -59,8 +60,10 @@ func (r *notificationRepository) GetByRecipient(ctx context.Context, userId uuid
 			&n.TargetId,
 			&n.Type,
 			&n.CreatedAt,
-			&n.Actor,
 			&n.Read,
+			&n.Actor.ID,
+			&n.Actor.Username,
+			&n.Actor.AvatarURL,
 		); err != nil {
 			return nil, err
 		}

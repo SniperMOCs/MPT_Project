@@ -261,3 +261,29 @@ func (h *ContentHandler) GetSubscriptions(w http.ResponseWriter, r *http.Request
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(list)
 }
+
+// @Summary      Получить все посты
+// @Description  Возвращает все посты
+// @Tags         Контент
+// @Accept       json
+// @Produce      json
+// @Security     BearerAuth
+// @Success      200  {array}   content.ContentResponse  "Лента постов"
+// @Failure      401  {string}  string           "Не авторизован"
+// @Failure      500  {string}  string           "Ошибка сервера"
+// @Router       /content/all [get]
+func (h *ContentHandler) GetAll(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		return
+	}
+
+	list, err := h.contentService.GetAll(r.Context())
+	if err != nil {
+		http.Error(w, "cannot get content", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(list)
+}

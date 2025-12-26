@@ -46,6 +46,10 @@ func (s *contentService) GetByFollowing(ctx context.Context, userId uuid.UUID) (
 	return s.repo.GetByFollowing(ctx, userId)
 }
 
+func (s *contentService) GetAll(ctx context.Context) ([]ContentResponse, error) {
+	return s.repo.GetAll(ctx)
+}
+
 func (s *contentService) Delete(ctx context.Context, id uuid.UUID, userId uuid.UUID) error {
 	c, err := s.repo.GetByID(ctx, id)
 	if err != nil {

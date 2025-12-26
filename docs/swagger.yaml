@@ -398,6 +398,33 @@ paths:
       summary: Получить пост по ID
       tags:
       - Контент
+  /content/all:
+    get:
+      consumes:
+      - application/json
+      description: Возвращает все посты
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Лента постов
+          schema:
+            items:
+              $ref: '#/definitions/content.ContentResponse'
+            type: array
+        "401":
+          description: Не авторизован
+          schema:
+            type: string
+        "500":
+          description: Ошибка сервера
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: Получить все посты
+      tags:
+      - Контент
   /content/create:
     post:
       consumes:

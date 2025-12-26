@@ -141,6 +141,44 @@ func (r *contentRepository) GetByFollowing(ctx context.Context, userId uuid.UUID
 	return res, nil
 }
 
+func (r *contentRepository) GetAll(ctx context.Context) ([]ContentResponse, error) {
+	query := `
+		SELECT c.id, c.description, c.media_urls, c.created_at, c.is_visible, c.author_id, u.username, u.avatar_url
+		FROM contents c
+		INNER JOIN users u ON c.author_id = u.id
+		WHERE c.is_visible = true
+		ORDER BY c.created_at DESC
+	`
+
+	rows, err := r.db.QueryContext(ctx, query)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var res []ContentResponse
+	for rows.Next() {
+		var c ContentResponse
+
+		if err := rows.Scan(
+			&c.ID,
+			&c.Description,
+			pq.Array(&c.MediaURLs),
+			&c.CreatedAt,
+			&c.IsVisible,
+			&c.Author.ID,
+			&c.Author.Username,
+			&c.Author.AvatarURL,
+		); err != nil {
+			return nil, err
+		}
+
+		res = append(res, c)
+	}
+
+	return res, nil
+}
+
 func (r *contentRepository) Delete(ctx context.Context, id uuid.UUID) error {
 	query := `
 		UPDATE contents

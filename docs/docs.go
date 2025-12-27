@@ -223,8 +223,11 @@ const docTemplate = `{
                     }
                 ],
                 "responses": {
-                    "201": {
-                        "description": "Пост создан"
+                    "200": {
+                        "description": "ID созданного поста",
+                        "schema": {
+                            "type": "id"
+                        }
                     },
                     "400": {
                         "description": "Неверный формат запроса",

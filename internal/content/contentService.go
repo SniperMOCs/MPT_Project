@@ -22,7 +22,7 @@ func NewContentService(repo ContentRepository) ContentService {
 	}
 }
 
-func (s *contentService) Create(ctx context.Context, description string, authorId uuid.UUID) error {
+func (s *contentService) Create(ctx context.Context, description string, authorId uuid.UUID) (uuid.UUID, error) {
 	content := &Content{
 		ID:          uuid.New(),
 		AuthorId:    authorId,

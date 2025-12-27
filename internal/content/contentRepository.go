@@ -18,12 +18,14 @@ func NewContentRepository(db *sql.DB) ContentRepository {
 	return &contentRepository{db: db}
 }
 
-func (r *contentRepository) Create(ctx context.Context, c *Content) error {
+func (r *contentRepository) Create(ctx context.Context, c *Content) (uuid.UUID, error) {
 	query := `
 		INSERT INTO contents (id, author_id, description, media_urls, created_at, is_visible)
 		VALUES($1, $2, $3, $4, $5, $6)	
+		RETURNING id
 	`
-	_, err := r.db.ExecContext(
+	var returnId uuid.UUID
+	err := r.db.QueryRowContext(
 		ctx,
 		query,
 		c.ID,
@@ -32,8 +34,13 @@ func (r *contentRepository) Create(ctx context.Context, c *Content) error {
 		pq.Array(c.MediaURLs),
 		c.CreatedAt,
 		c.IsVisible,
-	)
-	return err
+	).Scan(&returnId)
+
+	if err != nil {
+		return uuid.Nil, err
+	}
+
+	return returnId, err
 }
 
 func (r *contentRepository) GetByID(ctx context.Context, id uuid.UUID) (*ContentResponse, error) {

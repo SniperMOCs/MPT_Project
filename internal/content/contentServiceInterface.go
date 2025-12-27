@@ -8,7 +8,7 @@ import (
 )
 
 type ContentService interface {
-	Create(ctx context.Context, description string, authorId uuid.UUID) error
+	Create(ctx context.Context, description string, authorId uuid.UUID) (uuid.UUID, error)
 	GetByID(ctx context.Context, id uuid.UUID) (*ContentResponse, error)
 	GetByAuthor(ctx context.Context, authorId uuid.UUID) ([]ContentResponse, error)
 	GetByFollowing(ctx context.Context, userId uuid.UUID) ([]ContentResponse, error)

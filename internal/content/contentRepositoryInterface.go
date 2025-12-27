@@ -7,7 +7,7 @@ import (
 )
 
 type ContentRepository interface {
-	Create(ctx context.Context, content *Content) error
+	Create(ctx context.Context, content *Content) (uuid.UUID, error)
 	GetByID(ctx context.Context, id uuid.UUID) (*ContentResponse, error)
 	GetByAuthor(ctx context.Context, authorId uuid.UUID) ([]ContentResponse, error)
 	GetByFollowing(ctx context.Context, userId uuid.UUID) ([]ContentResponse, error)

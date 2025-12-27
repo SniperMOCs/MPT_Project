@@ -23,7 +23,7 @@ func NewContentHandler(contentService ContentService) *ContentHandler {
 // @Accept       json
 // @Security     BearerAuth
 // @Param        dto  body      content.ContentDTO  true  "Данные поста"
-// @Success      201  "Пост создан"
+// @Success      200  {id}		uuid.UUID			"ID созданного поста"
 // @Failure      400  {string}  string              "Неверный формат запроса"
 // @Failure      401  {string}  string              "Не авторизован"
 // @Failure      500  {string}  string              "Ошибка сервера"
@@ -41,13 +41,15 @@ func (h *ContentHandler) Create(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "invalid body", http.StatusBadRequest)
 		return
 	}
-
-	if err := h.contentService.Create(r.Context(), dto.Description, userID); err != nil {
+	var id uuid.UUID
+	id, err := h.contentService.Create(r.Context(), dto.Description, userID)
+	if err != nil {
 		http.Error(w, "cannot create content", http.StatusInternalServerError)
 		return
 	}
 
-	w.WriteHeader(http.StatusCreated)
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(id)
 }
 
 // @Summary      Получить пост по ID

@@ -15,13 +15,23 @@ func NewNotificationRepository(db *sql.DB) NotificationRepository {
 	return &notificationRepository{db: db}
 }
 
-func (r *notificationRepository) Create(ctx context.Context, n *Notification) error {
+func (r *notificationRepository) Create(ctx context.Context, n *Notification) (*NotificationResponse, error) {
 	query := `
-		INSERT INTO notifications (id, recipient_id, target_id, type, created_at, actor_id, read)
-		VALUES ($1, $2, $3, $4, $5, $6, $7)
-	`
+        WITH inserted AS (
+            INSERT INTO notifications (id, recipient_id, target_id, type, created_at, actor_id, read)
+            VALUES ($1, $2, $3, $4, $5, $6, $7)
+            RETURNING id, recipient_id, target_id, type, created_at, actor_id, read
+        )
+        SELECT 
+            i.id, i.recipient_id, i.target_id, i.type, i.created_at, i.read,
+            u.id, u.username, u.avatar_url
+        FROM inserted i
+        JOIN users u ON i.actor_id = u.id
+    `
 
-	_, err := r.db.ExecContext(
+	var res NotificationResponse
+
+	err := r.db.QueryRowContext(
 		ctx,
 		query,
 		n.ID,
@@ -29,10 +39,25 @@ func (r *notificationRepository) Create(ctx context.Context, n *Notification) er
 		n.TargetId,
 		n.Type,
 		n.CreatedAt,
-		n.Actor,
+		n.Actor, // Здесь передается UUID актора
 		n.Read,
+	).Scan(
+		&res.ID,
+		&res.Recipient,
+		&res.TargetId,
+		&res.Type,
+		&res.CreatedAt,
+		&res.Read,
+		&res.Actor.ID,
+		&res.Actor.Username,
+		&res.Actor.AvatarURL,
 	)
-	return err
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &res, nil
 }
 
 func (r *notificationRepository) GetByRecipient(ctx context.Context, userId uuid.UUID) ([]NotificationResponse, error) {

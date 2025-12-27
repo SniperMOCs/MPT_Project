@@ -132,7 +132,7 @@ definitions:
         example: true
         type: boolean
       media_urls:
-        description: Массив URL медиа-файлов (опционально)
+        description: Массив URL медиа-файлов (минмум один файл)
         example:
         - '[/uploads/content/post1/image1.jpg]'
         items:
@@ -193,19 +193,23 @@ definitions:
     - LIKE
     - COMMENT
     - FOLLOW
+    - RESPONSE
     type: string
     x-enum-comments:
       Comment: Уведомление о комментарии
       Follow: Уведомление о подписке
       Like: Уведомление о лайке
+      Response: Уведомление об ответе на комментарий
     x-enum-descriptions:
     - Уведомление о лайке
     - Уведомление о комментарии
     - Уведомление о подписке
+    - Уведомление об ответе на комментарий
     x-enum-varnames:
     - Like
     - Comment
     - Follow
+    - Response
   user.RegisterDTO:
     description: Данные для регистрации
     properties:

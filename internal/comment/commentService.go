@@ -47,7 +47,7 @@ func (s *commentService) Create(ctx context.Context, authorId uuid.UUID, parentI
 		if err != nil {
 			return err
 		}
-		s.ns.Notify(ctx, authorId, parentComment.AuthorId, parentComment.ID, notification.Comment)
+		s.ns.Notify(ctx, authorId, parentComment.AuthorId, c.ID, notification.Response)
 	}
 	return nil
 }

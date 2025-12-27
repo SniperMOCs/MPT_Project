@@ -2,7 +2,6 @@ package notification
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	"github.com/google/uuid"
@@ -20,9 +19,9 @@ func NewNotificationService(repo NotificationRepository, hub *WebSocketHub) Noti
 	}
 }
 
-func (s *notificationService) Notify(ctx context.Context, actor uuid.UUID, recipient uuid.UUID, target uuid.UUID, notitype NotificationType) error {
+func (s *notificationService) Notify(ctx context.Context, actor uuid.UUID, recipient uuid.UUID, target uuid.UUID, notitype NotificationType) (*NotificationResponse, error) {
 	if actor == recipient {
-		return nil
+		return nil, nil
 	}
 	n := &Notification{
 		ID:        uuid.New(),
@@ -33,12 +32,12 @@ func (s *notificationService) Notify(ctx context.Context, actor uuid.UUID, recip
 		CreatedAt: time.Now(),
 		Read:      false,
 	}
-	if err := s.repo.Create(ctx, n); err != nil {
-		fmt.Println(err)
-		return err
+	nr, err := s.repo.Create(ctx, n)
+	if err != nil {
+		return nil, err
 	}
-	s.hub.SendToUser(recipient, n)
-	return nil
+	s.hub.SendToUser(recipient, nr)
+	return nr, nil
 }
 
 func (s *notificationService) GetByRecipient(ctx context.Context, userId uuid.UUID) ([]NotificationResponse, error) {

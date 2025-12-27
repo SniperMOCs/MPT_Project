@@ -7,7 +7,7 @@ import (
 )
 
 type NotificationRepository interface {
-	Create(ctx context.Context, n *Notification) error
+	Create(ctx context.Context, n *Notification) (*NotificationResponse, error)
 	GetByRecipient(ctx context.Context, userId uuid.UUID) ([]NotificationResponse, error)
 	MarkAsRead(ctx context.Context, userId uuid.UUID) error
 	GetUnreadCount(ctx context.Context, userId uuid.UUID) (int, error)

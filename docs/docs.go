@@ -1763,7 +1763,7 @@ const docTemplate = `{
                     "example": true
                 },
                 "media_urls": {
-                    "description": "Массив URL медиа-файлов (опционально)",
+                    "description": "Массив URL медиа-файлов (минмум один файл)",
                     "type": "array",
                     "items": {
                         "type": "string"
@@ -1848,22 +1848,26 @@ const docTemplate = `{
             "enum": [
                 "LIKE",
                 "COMMENT",
-                "FOLLOW"
+                "FOLLOW",
+                "RESPONSE"
             ],
             "x-enum-comments": {
                 "Comment": "Уведомление о комментарии",
                 "Follow": "Уведомление о подписке",
-                "Like": "Уведомление о лайке"
+                "Like": "Уведомление о лайке",
+                "Response": "Уведомление об ответе на комментарий"
             },
             "x-enum-descriptions": [
                 "Уведомление о лайке",
                 "Уведомление о комментарии",
-                "Уведомление о подписке"
+                "Уведомление о подписке",
+                "Уведомление об ответе на комментарий"
             ],
             "x-enum-varnames": [
                 "Like",
                 "Comment",
-                "Follow"
+                "Follow",
+                "Response"
             ]
         },
         "user.RegisterDTO": {

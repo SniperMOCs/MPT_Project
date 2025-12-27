@@ -40,10 +40,10 @@ func NewTestContentRepository() *TestContentRepository {
 	}
 }
 
-func (r *TestContentRepository) Create(ctx context.Context, content *Content) error {
+func (r *TestContentRepository) Create(ctx context.Context, content *Content) (uuid.UUID, error) {
 	r.callLog = append(r.callLog, "Create")
 	if err, ok := r.errors["Create"]; ok {
-		return err
+		return uuid.Nil, err
 	}
 
 	// Создаем ContentResponse для хранения
@@ -67,7 +67,7 @@ func (r *TestContentRepository) Create(ctx context.Context, content *Content) er
 	}
 	r.contentsByAuthor[content.AuthorId] = append(r.contentsByAuthor[content.AuthorId], *contentResponse)
 
-	return nil
+	return content.ID, nil
 }
 
 func (r *TestContentRepository) GetByID(ctx context.Context, id uuid.UUID) (*ContentResponse, error) {
@@ -302,7 +302,7 @@ func TestContentService_Create(t *testing.T) {
 		description := "Test post description"
 		authorId := uuid.New()
 
-		err := service.Create(ctx, description, authorId)
+		contentID, err := service.Create(ctx, description, authorId)
 
 		if err != nil {
 			t.Errorf("Create() error = %v", err)
@@ -311,6 +311,11 @@ func TestContentService_Create(t *testing.T) {
 		// Проверяем что Create был вызван
 		if !repo.WasCalled("Create") {
 			t.Error("Create() не был вызван в репозитории")
+		}
+
+		// Проверяем что вернулся корректный UUID
+		if contentID == uuid.Nil {
+			t.Error("Create() должен вернуть не-nil UUID")
 		}
 
 		// Проверяем что контент был создан
@@ -343,10 +348,13 @@ func TestContentService_Create(t *testing.T) {
 		ctx := context.Background()
 		repo.SetError("Create", errors.New("repository error"))
 
-		err := service.Create(ctx, "Test description", uuid.New())
+		contentID, err := service.Create(ctx, "Test description", uuid.New())
 
 		if err == nil {
 			t.Error("Create() должен вернуть ошибку при ошибке в репозитории")
+		}
+		if contentID != uuid.Nil {
+			t.Error("Create() должен вернуть uuid.Nil при ошибке")
 		}
 	})
 }

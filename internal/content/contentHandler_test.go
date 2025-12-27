@@ -64,10 +64,10 @@ func NewTestContentService() *TestContentService {
 	}
 }
 
-func (s *TestContentService) Create(ctx context.Context, description string, authorId uuid.UUID) error {
+func (s *TestContentService) Create(ctx context.Context, description string, authorId uuid.UUID) (uuid.UUID, error) {
 	s.callLog = append(s.callLog, "Create")
 	if err, ok := s.errors["Create"]; ok {
-		return err
+		return uuid.Nil, err
 	}
 
 	s.createdContent = append(s.createdContent, CreateContentData{
@@ -76,16 +76,17 @@ func (s *TestContentService) Create(ctx context.Context, description string, aut
 	})
 
 	// Создаем тестовый контент
+	contentID := uuid.New()
 	content := &ContentResponse{
-		ID:          uuid.New(),
+		ID:          contentID,
 		Description: description,
 		Author: ContentAuthor{
 			ID: authorId,
 		},
 	}
-	s.contentByID[content.ID] = content
+	s.contentByID[contentID] = content
 
-	return nil
+	return contentID, nil
 }
 
 func (s *TestContentService) GetByID(ctx context.Context, id uuid.UUID) (*ContentResponse, error) {
@@ -255,8 +256,8 @@ func TestContentHandler_Create(t *testing.T) {
 
 		handler.Create(w, req)
 
-		if w.Code != http.StatusCreated {
-			t.Errorf("Create() вернул статус %d, ожидался %d", w.Code, http.StatusCreated)
+		if w.Code != http.StatusOK {
+			t.Errorf("Create() вернул статус %d, ожидался %d", w.Code, http.StatusOK)
 		}
 
 		if !service.WasCalled("Create") {
@@ -273,6 +274,16 @@ func TestContentHandler_Create(t *testing.T) {
 		}
 		if createdData.AuthorId != userId {
 			t.Errorf("AuthorId = %v, ожидался %v", createdData.AuthorId, userId)
+		}
+
+		// Проверяем что вернулся UUID в ответе
+		var responseID uuid.UUID
+		err := json.NewDecoder(w.Body).Decode(&responseID)
+		if err != nil {
+			t.Errorf("Не удалось декодировать UUID из ответа: %v", err)
+		}
+		if responseID == uuid.Nil {
+			t.Error("В ответе должен быть не-nil UUID")
 		}
 	})
 
@@ -587,6 +598,7 @@ func TestContentHandler_Update(t *testing.T) {
 		dto := UpdatePostDTO{
 			Description: stringPtr("Updated description"),
 			IsVisible:   boolPtr(false),
+			MediaURLs:   []string{"/uploads/image1.jpg"},
 		}
 
 		reqBody, _ := json.Marshal(dto)
@@ -607,6 +619,17 @@ func TestContentHandler_Update(t *testing.T) {
 
 		if len(service.updatedContent) != 1 {
 			t.Errorf("Обновлено %d контента, ожидалось 1", len(service.updatedContent))
+		}
+
+		updatedData := service.updatedContent[0]
+		if *updatedData.Description != *dto.Description {
+			t.Errorf("Description = %s, ожидался %s", *updatedData.Description, *dto.Description)
+		}
+		if *updatedData.IsVisible != *dto.IsVisible {
+			t.Errorf("IsVisible = %v, ожидался %v", *updatedData.IsVisible, *dto.IsVisible)
+		}
+		if len(*updatedData.MediaURLs) != len(dto.MediaURLs) {
+			t.Errorf("MediaURLs содержит %d элементов, ожидалось %d", len(*updatedData.MediaURLs), len(dto.MediaURLs))
 		}
 	})
 

@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 
+	"github.com/SniperMOCs/MPT_Project/internal/auth"
 	contextkeys "github.com/SniperMOCs/MPT_Project/internal/contextKeys"
 	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
@@ -16,31 +17,45 @@ var upgrader = websocket.Upgrader{
 type NotificationHandler struct {
 	service NotificationService
 	hub     *WebSocketHub
+	jwt     *auth.JWTManager
 }
 
-func NewNotificationHandler(service NotificationService, hub *WebSocketHub) *NotificationHandler {
+func NewNotificationHandler(service NotificationService, hub *WebSocketHub, jwt *auth.JWTManager) *NotificationHandler {
 	return &NotificationHandler{
 		service: service,
 		hub:     hub,
+		jwt:     jwt,
 	}
 }
 
 // @Summary      WebSocket соединение для уведомлений
-// @Description  Устанавливает WebSocket соединение для получения уведомлений в реальном времени. Требует заголовок Authorization: Bearer {token}
+// @Description  Устанавливает WebSocket соединение для получения уведомлений в реальном времени.
+// @Description  Токен передается в URL параметре 'token' (так как браузерные WebSocket не поддерживают кастомные заголовки).
 // @Tags         Уведомления
 // @Accept       json
 // @Produce      json
-// @Security     BearerAuth
-// @Param        Authorization  header    string  true  "Bearer {token}"
-// @Success      101            {string}  string  "Switching Protocols"
-// @Failure      401            {string}  string  "Не авторизован"
+// @Param        token    query     string  true  "JWT токен доступа"
+// @Success      101      {string}  string  "Switching Protocols"
+// @Failure      401      {string}  string  "Не авторизован"
 // @Router       /ws/notifications [get]
 func (h *NotificationHandler) ServeWS(w http.ResponseWriter, r *http.Request) {
+	tokenString := r.URL.Query().Get("token")
+	if tokenString == "" {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+	claims, err := h.jwt.ValidateToken(tokenString)
+	if err != nil {
+		http.Error(w, "unauthorized", http.StatusUnauthorized)
+		return
+	}
+	userID := claims.UserID
+
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		return
 	}
-	userID := r.Context().Value(contextkeys.UserIDKey).(uuid.UUID)
+
 	h.hub.Register(userID, conn)
 	defer h.hub.Unregister(userID)
 

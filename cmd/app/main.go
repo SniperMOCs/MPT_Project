@@ -86,7 +86,7 @@ func main() {
 	notificationRepo := notification.NewNotificationRepository(db)
 	hub := notification.NewWebSocketHub()
 	notificationService := notification.NewNotificationService(notificationRepo, hub)
-	notificationHandler := notification.NewNotificationHandler(notificationService, hub)
+	notificationHandler := notification.NewNotificationHandler(notificationService, hub, jwtManager)
 
 	// Content
 	contentRepo := content.NewContentRepository(db)
@@ -161,7 +161,7 @@ func main() {
 	mux.Handle("/uploads/", http.StripPrefix("/uploads/", http.FileServer(http.Dir("./uploads"))))
 
 	// WEBSOCKET
-	mux.Handle("/ws/notifications", auth.Middleware(jwtManager, cfg)(http.HandlerFunc(notificationHandler.ServeWS)))
+	mux.HandleFunc("/ws/notifications", notificationHandler.ServeWS)
 
 	// SWAGGER
 	mux.HandleFunc("/swagger/", httpSwagger.WrapHandler)

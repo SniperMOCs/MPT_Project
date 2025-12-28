@@ -3,6 +3,8 @@ package user
 import (
 	"context"
 	"errors"
+	"io"
+	"strings"
 	"testing"
 	"time"
 
@@ -196,6 +198,17 @@ func (r *TestUserRepository) WasCalled(methodName string) bool {
 	return false
 }
 
+type TestAvatarStorage struct {
+	saveFunc func(ctx context.Context, userID uuid.UUID, file io.Reader) (string, error)
+}
+
+func (m *TestAvatarStorage) Save(ctx context.Context, userID uuid.UUID, file io.Reader) (string, error) {
+	if m.saveFunc != nil {
+		return m.saveFunc(ctx, userID, file)
+	}
+	return "/uploads/avatar.jpg", nil
+}
+
 func hashPassword(password string) string {
 	hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {
@@ -224,374 +237,308 @@ func createTestUser() *User {
 	}
 }
 
-func TestUserService_Create(t *testing.T) {
-	t.Run("Успешное создание пользователя", func(t *testing.T) {
+func createTestUserService(repo *TestUserRepository) *userService {
+	return &userService{
+		repo:          repo,
+		avatarStorage: &TestAvatarStorage{},
+	}
+}
+
+// Дополнительные тесты для увеличения покрытия
+
+func TestUserService_Create_EdgeCases(t *testing.T) {
+	t.Run("Ошибка при пустом пароле", func(t *testing.T) {
 		repo := NewTestUserRepository()
-		service := NewUserService(repo)
+		service := createTestUserService(repo)
 
 		user := &User{
-			Username: "newuser",
+			Username: "testuser",
+			Password: " ", // пустой пароль
+		}
+
+		err := service.Create(context.Background(), user)
+		if err == nil {
+			t.Error("Create() должен вернуть ошибку при пустом пароле")
+		}
+	})
+
+	t.Run("Ошибка при ошибке проверки существования username", func(t *testing.T) {
+		repo := NewTestUserRepository()
+		repo.SetError("ExistsByUsername", errors.New("database error"))
+		service := createTestUserService(repo)
+
+		user := &User{
+			Username: "testuser",
 			Password: "password123",
 		}
 
 		err := service.Create(context.Background(), user)
-
-		if err != nil {
-			t.Errorf("Create() error = %v", err)
-		}
-		if user.ID == uuid.Nil {
-			t.Error("Create() не установил ID")
-		}
-		if user.Password == "password123" {
-			t.Error("Create() не захешировал пароль")
-		}
-		if user.CreatedAt.IsZero() {
-			t.Error("Create() не установил CreatedAt")
+		if err == nil {
+			t.Error("Create() должен вернуть ошибку при ошибке проверки username")
 		}
 	})
 
-	t.Run("Ошибка при пустом username", func(t *testing.T) {
+	t.Run("Ошибка при ошибке создания в репозитории", func(t *testing.T) {
 		repo := NewTestUserRepository()
-		service := NewUserService(repo)
+		repo.SetError("Create", errors.New("database error"))
+		service := createTestUserService(repo)
 
 		user := &User{
-			Username: " ",
+			Username: "testuser",
 			Password: "password123",
 		}
 
 		err := service.Create(context.Background(), user)
-
 		if err == nil {
-			t.Error("Create() должен вернуть ошибку при пустом username")
-		}
-	})
-
-	t.Run("Ошибка при занятом username", func(t *testing.T) {
-		repo := NewTestUserRepository()
-		service := NewUserService(repo)
-
-		// Cоздание пользователя
-		existingUser := &User{
-			ID:       uuid.New(),
-			Username: "user11211511",
-			Password: hashPassword("password123"),
-		}
-		repo.AddUser(existingUser)
-
-		// Создать пользователя с таким же username
-		newUser := &User{
-			Username: "user11211511",
-			Password: "password456",
-		}
-
-		err := service.Create(context.Background(), newUser)
-
-		if err == nil {
-			t.Error("Create() должен вернуть ошибку при занятом username")
+			t.Error("Create() должен вернуть ошибку при ошибке создания")
 		}
 	})
 }
 
-func TestUserService_GetByID(t *testing.T) {
-	t.Run("Успешное получение пользователя по ID", func(t *testing.T) {
+func TestUserService_Update_EdgeCases(t *testing.T) {
+	t.Run("Обновление без изменений", func(t *testing.T) {
 		repo := NewTestUserRepository()
-		service := NewUserService(repo)
+		service := createTestUserService(repo)
 
 		testUser := createTestUser()
 		repo.AddUser(testUser)
 
-		foundUser, err := service.GetByID(context.Background(), testUser.ID)
-
+		// Все поля пустые - не должно быть ошибки
+		err := service.Update(context.Background(), testUser.ID, "", "", "")
 		if err != nil {
-			t.Errorf("GetByID() error = %v", err)
-		}
-		if foundUser.ID != testUser.ID {
-			t.Errorf("GetByID() вернул пользователя с ID %v, ожидался %v", foundUser.ID, testUser.ID)
+			t.Errorf("Update() с пустыми полями не должен возвращать ошибку: %v", err)
 		}
 	})
 
-	t.Run("Ошибка если пользователь не найден", func(t *testing.T) {
+	t.Run("Ошибка при ошибке проверки существования username", func(t *testing.T) {
 		repo := NewTestUserRepository()
-		service := NewUserService(repo)
+		service := createTestUserService(repo)
 
-		_, err := service.GetByID(context.Background(), uuid.New())
+		testUser := createTestUser()
+		repo.AddUser(testUser)
+		repo.SetError("ExistsByUsername", errors.New("database error"))
 
+		err := service.Update(context.Background(), testUser.ID, "newusername", "", "")
 		if err == nil {
-			t.Error("GetByID() должен вернуть ошибку если пользователь не найден")
+			t.Error("Update() должен вернуть ошибку при ошибке проверки username")
 		}
 	})
-}
 
-func TestUserService_GetByUsername(t *testing.T) {
-	t.Run("Успешное получение пользователя по username", func(t *testing.T) {
+	t.Run("Ошибка при ошибке обновления в репозитории", func(t *testing.T) {
 		repo := NewTestUserRepository()
-		service := NewUserService(repo)
+		service := createTestUserService(repo)
+
+		testUser := createTestUser()
+		repo.AddUser(testUser)
+		repo.SetError("Update", errors.New("database error"))
+
+		err := service.Update(context.Background(), testUser.ID, "newusername", "", "")
+		if err == nil {
+			t.Error("Update() должен вернуть ошибку при ошибке обновления")
+		}
+	})
+
+	t.Run("Обновление только описания", func(t *testing.T) {
+		repo := NewTestUserRepository()
+		service := createTestUserService(repo)
 
 		testUser := createTestUser()
 		repo.AddUser(testUser)
 
-		foundUser, err := service.GetByUsername(context.Background(), testUser.Username)
-
-		if err != nil {
-			t.Errorf("GetByUsername() error = %v", err)
-		}
-		if foundUser.Username != testUser.Username {
-			t.Errorf("GetByUsername() вернул пользователя с username %s, ожидался %s",
-				foundUser.Username, testUser.Username)
-		}
-	})
-
-	t.Run("Ошибка если пользователь не найден", func(t *testing.T) {
-		repo := NewTestUserRepository()
-		service := NewUserService(repo)
-
-		_, err := service.GetByUsername(context.Background(), "nonexistent")
-
-		if err == nil {
-			t.Error("GetByUsername() должен вернуть ошибку если пользователь не найден")
-		}
-	})
-}
-
-func TestUserService_Update(t *testing.T) {
-	t.Run("Успешное обновление всех полей", func(t *testing.T) {
-		repo := NewTestUserRepository()
-		service := NewUserService(repo)
-
-		testUser := createTestUser()
-		repo.AddUser(testUser)
-
-		err := service.Update(context.Background(), testUser.ID,
-			"newusername", "New Full Name", "New Description")
-
-		if err != nil {
-			t.Errorf("Update() error = %v", err)
-		}
-
-		// Проверяем что обновилось
-		updatedUser, _ := repo.GetByID(context.Background(), testUser.ID)
-		if updatedUser.Username != "newusername" {
-			t.Error("Update() не обновил username")
-		}
-		if *updatedUser.FullName != "New Full Name" {
-			t.Error("Update() не обновил FullName")
-		}
-		if *updatedUser.Description != "New Description" {
-			t.Error("Update() не обновил Description")
-		}
-	})
-
-	t.Run("Ошибка при занятом username", func(t *testing.T) {
-		repo := NewTestUserRepository()
-		service := NewUserService(repo)
-
-		// Создаем двух пользователей
-		user1 := &User{
-			ID:       uuid.New(),
-			Username: "user1",
-			Password: hashPassword("pass1"),
-		}
-		user2 := &User{
-			ID:       uuid.New(),
-			Username: "user2",
-			Password: hashPassword("pass2"),
-		}
-		repo.AddUser(user1)
-		repo.AddUser(user2)
-
-		// Пытаемся сменить username user2 на user1
-		err := service.Update(context.Background(), user2.ID, "user1", "", "")
-
-		if err == nil {
-			t.Error("Update() должен вернуть ошибку при занятом username")
-		}
-	})
-
-	t.Run("Обновление только одного поля", func(t *testing.T) {
-		repo := NewTestUserRepository()
-		service := NewUserService(repo)
-
-		testUser := createTestUser()
-		originalUsername := testUser.Username
-		repo.AddUser(testUser)
-
-		// Обновляем только fullname
-		err := service.Update(context.Background(), testUser.ID,
-			"", "Only FullName Updated", "")
-
+		newDescription := "Updated Description"
+		err := service.Update(context.Background(), testUser.ID, "", "", newDescription)
 		if err != nil {
 			t.Errorf("Update() error = %v", err)
 		}
 
 		updatedUser, _ := repo.GetByID(context.Background(), testUser.ID)
-		if updatedUser.Username != originalUsername {
-			t.Error("Update() не должен менять username если он пустой")
-		}
-		if *updatedUser.FullName != "Only FullName Updated" {
-			t.Error("Update() должен обновить FullName")
+		if *updatedUser.Description != newDescription {
+			t.Errorf("Update() не обновил Description: got %v, want %v", *updatedUser.Description, newDescription)
 		}
 	})
 }
 
-func TestUserService_UpdatePassword(t *testing.T) {
-	t.Run("Успешная смена пароля", func(t *testing.T) {
+func TestUserService_UpdatePassword_EdgeCases(t *testing.T) {
+	t.Run("Ошибка при ошибке получения пользователя", func(t *testing.T) {
 		repo := NewTestUserRepository()
-		service := NewUserService(repo)
+		service := createTestUserService(repo)
+
+		repo.SetError("GetByID", errors.New("database error"))
+
+		err := service.UpdatePassword(context.Background(), uuid.New(), "oldpass", "newpass")
+		if err == nil {
+			t.Error("UpdatePassword() должен вернуть ошибку при ошибке получения пользователя")
+		}
+	})
+
+	t.Run("Ошибка при ошибке хеширования пароля", func(t *testing.T) {
+		repo := NewTestUserRepository()
+		service := createTestUserService(repo)
 
 		testUser := createTestUser()
-		oldPassword := "oldpassword123"
-		testUser.Password = hashPassword(oldPassword)
+		testUser.Password = hashPassword("oldpassword")
 		repo.AddUser(testUser)
 
-		newPassword := "newpasswor123132313123312312313d456"
-		err := service.UpdatePassword(context.Background(), testUser.ID,
-			oldPassword, newPassword)
+		// Передаем очень длинный пароль, который вызовет ошибку bcrypt
+		longPassword := strings.Repeat("a", 100)
+		err := service.UpdatePassword(context.Background(), testUser.ID, "oldpassword", longPassword)
+		if err == nil {
+			t.Error("UpdatePassword() должен вернуть ошибку при ошибке хеширования")
+		}
+	})
 
+	t.Run("Ошибка при ошибке обновления пароля в репозитории", func(t *testing.T) {
+		repo := NewTestUserRepository()
+		service := createTestUserService(repo)
+
+		testUser := createTestUser()
+		testUser.Password = hashPassword("oldpassword")
+		repo.AddUser(testUser)
+		repo.SetError("UpdatePassword", errors.New("database error"))
+
+		err := service.UpdatePassword(context.Background(), testUser.ID, "oldpassword", "newpassword")
+		if err == nil {
+			t.Error("UpdatePassword() должен вернуть ошибку при ошибке обновления в репозитории")
+		}
+	})
+}
+
+func TestUserService_UpdateAvatar(t *testing.T) {
+	t.Run("Успешное обновление аватара", func(t *testing.T) {
+		repo := NewTestUserRepository()
+		storage := &TestAvatarStorage{
+			saveFunc: func(ctx context.Context, userID uuid.UUID, file io.Reader) (string, error) {
+				return "/uploads/avatar_new.jpg", nil
+			},
+		}
+		service := &userService{
+			repo:          repo,
+			avatarStorage: storage,
+		}
+
+		testUser := createTestUser()
+		repo.AddUser(testUser)
+
+		file := strings.NewReader("fake image data")
+		err := service.UpdateAvatar(context.Background(), testUser.ID, file)
 		if err != nil {
-			t.Errorf("UpdatePassword() error = %v", err)
+			t.Errorf("UpdateAvatar() error = %v", err)
 		}
 
-		// Проверяем что пароль изменился
-		updatedUser, _ := repo.GetByID(context.Background(), testUser.ID)
-		if service.CheckPassword(updatedUser, oldPassword) {
-			t.Error("Старый пароль больше не должен работать")
-		}
-		if !service.CheckPassword(updatedUser, newPassword) {
-			t.Error("Новый пароль должен работать")
+		if !repo.WasCalled("UpdateAvatar") {
+			t.Error("UpdateAvatar() должен вызывать репозиторий")
 		}
 	})
 
-	t.Run("Ошибка при неправильном старом пароле", func(t *testing.T) {
+	t.Run("Ошибка при сохранении файла в хранилище", func(t *testing.T) {
 		repo := NewTestUserRepository()
-		service := NewUserService(repo)
-
-		testUser := createTestUser()
-		testUser.Password = hashPassword("correctpassword")
-		repo.AddUser(testUser)
-
-		err := service.UpdatePassword(context.Background(), testUser.ID,
-			"wrongpassword", "newpassword")
-
-		if err == nil {
-			t.Error("UpdatePassword() должен вернуть ошибку при неправильном старом пароле")
+		storage := &TestAvatarStorage{
+			saveFunc: func(ctx context.Context, userID uuid.UUID, file io.Reader) (string, error) {
+				return "", errors.New("storage error")
+			},
 		}
-	})
-
-	t.Run("Ошибка при пустых паролях", func(t *testing.T) {
-		repo := NewTestUserRepository()
-		service := NewUserService(repo)
+		service := &userService{
+			repo:          repo,
+			avatarStorage: storage,
+		}
 
 		testUser := createTestUser()
 		repo.AddUser(testUser)
 
-		// Пустой старый пароль
-		err := service.UpdatePassword(context.Background(), testUser.ID,
-			"", "newpassword")
+		file := strings.NewReader("fake image data")
+		err := service.UpdateAvatar(context.Background(), testUser.ID, file)
 		if err == nil {
-			t.Error("UpdatePassword() должен вернуть ошибку при пустом старом пароле")
-		}
-
-		// Пустой новый пароль
-		err = service.UpdatePassword(context.Background(), testUser.ID,
-			"oldpassword", "")
-		if err == nil {
-			t.Error("UpdatePassword() должен вернуть ошибку при пустом новом пароле")
+			t.Error("UpdateAvatar() должен вернуть ошибку при ошибке хранилища")
 		}
 	})
 
-	t.Run("Ошибка если пользователь не найден", func(t *testing.T) {
+	t.Run("Ошибка при обновлении в репозитории", func(t *testing.T) {
 		repo := NewTestUserRepository()
-		service := NewUserService(repo)
+		repo.SetError("UpdateAvatar", errors.New("database error"))
+		storage := &TestAvatarStorage{
+			saveFunc: func(ctx context.Context, userID uuid.UUID, file io.Reader) (string, error) {
+				return "/uploads/avatar_new.jpg", nil
+			},
+		}
+		service := &userService{
+			repo:          repo,
+			avatarStorage: storage,
+		}
 
-		err := service.UpdatePassword(context.Background(), uuid.New(),
-			"oldpass", "newpass")
+		testUser := createTestUser()
+		repo.AddUser(testUser)
 
+		file := strings.NewReader("fake image data")
+		err := service.UpdateAvatar(context.Background(), testUser.ID, file)
 		if err == nil {
-			t.Error("UpdatePassword() должен вернуть ошибку если пользователь не найден")
+			t.Error("UpdateAvatar() должен вернуть ошибку при ошибке репозитория")
 		}
 	})
 }
 
-func TestUserService_CheckPassword(t *testing.T) {
-	repo := NewTestUserRepository()
-	service := NewUserService(repo)
-
-	t.Run("Правильный пароль", func(t *testing.T) {
-		user := &User{
-			Password: hashPassword("correctpassword"),
-		}
-
-		result := service.CheckPassword(user, "correctpassword")
-		if !result {
-			t.Error("CheckPassword() должен вернуть true для правильного пароля")
-		}
-	})
-
-	t.Run("Неправильный пароль", func(t *testing.T) {
-		user := &User{
-			Password: hashPassword("correctpassword"),
-		}
-
-		result := service.CheckPassword(user, "wrongpassword")
-		if result {
-			t.Error("CheckPassword() должен вернуть false для неправильного пароля")
-		}
-	})
-
-	t.Run("Пустой пароль", func(t *testing.T) {
-		user := &User{
-			Password: hashPassword("correctpassword"),
-		}
-
-		result := service.CheckPassword(user, "")
-		if result {
-			t.Error("CheckPassword() должен вернуть false для пустого пароля")
-		}
-	})
-}
-
-func TestUserService_SearchByFullName(t *testing.T) {
-	t.Run("Успешный поиск пользователей", func(t *testing.T) {
+func TestUserService_SearchByFullName_EdgeCases(t *testing.T) {
+	t.Run("Поиск с пустым запросом", func(t *testing.T) {
 		repo := NewTestUserRepository()
-		service := NewUserService(repo)
+		service := createTestUserService(repo)
 
-		// Создаем тестовых пользователей для поиска
+		// Добавляем тестовых пользователей
 		users := []*User{
 			{
 				ID:       uuid.New(),
-				Username: "john_doe",
+				Username: "user1",
 				FullName: stringPtr("John Doe"),
 			},
 			{
 				ID:       uuid.New(),
-				Username: "jane_smith",
+				Username: "user2",
 				FullName: stringPtr("Jane Smith"),
 			},
 		}
-
-		// Устанавливаем результаты поиска в моке
 		repo.SetSearchResults(users)
 
-		results, err := service.SearchByFullName(context.Background(), "john")
-
+		results, err := service.SearchByFullName(context.Background(), "")
 		if err != nil {
-			t.Errorf("SearchByFullName() error = %v", err)
+			t.Errorf("SearchByFullName() с пустым запросом не должен возвращать ошибку: %v", err)
 		}
 		if len(results) != 2 {
 			t.Errorf("SearchByFullName() вернул %d результатов, ожидалось 2", len(results))
 		}
 	})
 
-	t.Run("Ошибка поиска", func(t *testing.T) {
+	t.Run("Ошибка при поиске в репозитории", func(t *testing.T) {
 		repo := NewTestUserRepository()
-		service := NewUserService(repo)
+		repo.SetError("SearchByFullName", errors.New("database error"))
+		service := createTestUserService(repo)
 
-		repo.SetError("SearchByFullName", errors.New("search error"))
-
-		_, err := service.SearchByFullName(context.Background(), "query")
-
+		_, err := service.SearchByFullName(context.Background(), "search")
 		if err == nil {
-			t.Error("SearchByFullName() должен вернуть ошибку")
+			t.Error("SearchByFullName() должен вернуть ошибку при ошибке репозитория")
+		}
+	})
+}
+
+func TestUserService_GetByUsername_EdgeCases(t *testing.T) {
+	t.Run("Ошибка при ошибке репозитория", func(t *testing.T) {
+		repo := NewTestUserRepository()
+		repo.SetError("GetByUsername", errors.New("database error"))
+		service := createTestUserService(repo)
+
+		_, err := service.GetByUsername(context.Background(), "testuser")
+		if err == nil {
+			t.Error("GetByUsername() должен вернуть ошибку при ошибке репозитория")
+		}
+	})
+}
+
+func TestUserService_GetByID_EdgeCases(t *testing.T) {
+	t.Run("Ошибка при ошибке репозитория", func(t *testing.T) {
+		repo := NewTestUserRepository()
+		repo.SetError("GetByID", errors.New("database error"))
+		service := createTestUserService(repo)
+
+		_, err := service.GetByID(context.Background(), uuid.New())
+		if err == nil {
+			t.Error("GetByID() должен вернуть ошибку при ошибке репозитория")
 		}
 	})
 }

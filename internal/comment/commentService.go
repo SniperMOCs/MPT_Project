@@ -41,13 +41,21 @@ func (s *commentService) Create(ctx context.Context, authorId uuid.UUID, parentI
 	if err != nil {
 		return err
 	}
-	s.ns.Notify(ctx, authorId, c.Author.ID, c.ID, notification.Comment)
+
+	flag := true
 	if comment.ParentId != nil {
 		parentComment, err := s.repo.GetById(ctx, *comment.ParentId)
 		if err != nil {
 			return err
 		}
+		if parentComment.AuthorId == c.Author.ID {
+			flag = false
+		}
 		s.ns.Notify(ctx, authorId, parentComment.AuthorId, c.ID, notification.Response)
+	}
+
+	if flag {
+		s.ns.Notify(ctx, authorId, c.Author.ID, c.ID, notification.Comment)
 	}
 	return nil
 }

@@ -1268,12 +1268,13 @@ paths:
     get:
       consumes:
       - application/json
-      description: 'Устанавливает WebSocket соединение для получения уведомлений в
-        реальном времени. Требует заголовок Authorization: Bearer {token}'
+      description: |-
+        Устанавливает WebSocket соединение для получения уведомлений в реальном времени.
+        Токен передается в URL параметре 'token' (так как браузерные WebSocket не поддерживают кастомные заголовки).
       parameters:
-      - description: Bearer {token}
-        in: header
-        name: Authorization
+      - description: JWT токен доступа
+        in: query
+        name: token
         required: true
         type: string
       produces:
@@ -1287,8 +1288,6 @@ paths:
           description: Не авторизован
           schema:
             type: string
-      security:
-      - BearerAuth: []
       summary: WebSocket соединение для уведомлений
       tags:
       - Уведомления

@@ -30,12 +30,12 @@ func (h *WebSocketHub) Unregister(userID uuid.UUID) {
 	delete(h.connections, userID.String())
 }
 
-func (h *WebSocketHub) SendToUser(userID uuid.UUID, n *Notification) {
+func (h *WebSocketHub) SendToUser(userID uuid.UUID, nr *NotificationResponse) {
 	h.mu.RLock()
 	conn, ok := h.connections[userID.String()]
 	h.mu.RUnlock()
 	if !ok {
 		return
 	}
-	conn.WriteJSON(n)
+	conn.WriteJSON(nr)
 }

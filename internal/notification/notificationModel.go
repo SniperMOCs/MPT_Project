@@ -10,9 +10,10 @@ import (
 type NotificationType string
 
 const (
-	Like    NotificationType = "LIKE"    // Уведомление о лайке
-	Comment NotificationType = "COMMENT" // Уведомление о комментарии
-	Follow  NotificationType = "FOLLOW"  // Уведомление о подписке
+	Like     NotificationType = "LIKE"     // Уведомление о лайке
+	Comment  NotificationType = "COMMENT"  // Уведомление о комментарии
+	Follow   NotificationType = "FOLLOW"   // Уведомление о подписке
+	Response NotificationType = "RESPONSE" // Уведомление об ответе на комментарий
 )
 
 // Notification представляет модель уведомления

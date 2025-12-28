@@ -11,7 +11,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-// Мок для тестов ContentRepository
+// Мок для ContentRepository
 type TestContentRepository struct {
 	contentsByID     map[uuid.UUID]*ContentResponse
 	contentsByAuthor map[uuid.UUID][]ContentResponse
@@ -46,7 +46,6 @@ func (r *TestContentRepository) Create(ctx context.Context, content *Content) (u
 		return uuid.Nil, err
 	}
 
-	// Создаем ContentResponse для хранения
 	contentResponse := &ContentResponse{
 		ID:          content.ID,
 		Description: content.Description,
@@ -61,7 +60,6 @@ func (r *TestContentRepository) Create(ctx context.Context, content *Content) (u
 	r.contentsByID[content.ID] = contentResponse
 	r.createdContent = append(r.createdContent, content)
 
-	// Добавляем в список по авторам
 	if _, exists := r.contentsByAuthor[content.AuthorId]; !exists {
 		r.contentsByAuthor[content.AuthorId] = []ContentResponse{}
 	}
@@ -125,7 +123,6 @@ func (r *TestContentRepository) Delete(ctx context.Context, id uuid.UUID) error 
 		return errors.New("content not found")
 	}
 
-	// Помечаем как удаленный (is_visible = false)
 	content.IsVisible = false
 	r.deletedContent = append(r.deletedContent, id)
 
@@ -166,13 +163,11 @@ func (r *TestContentRepository) Update(ctx context.Context, description *string,
 func (r *TestContentRepository) AddContent(content *ContentResponse) {
 	r.contentsByID[content.ID] = content
 
-	// Добавляем в список по авторам
 	if _, exists := r.contentsByAuthor[content.Author.ID]; !exists {
 		r.contentsByAuthor[content.Author.ID] = []ContentResponse{}
 	}
 	r.contentsByAuthor[content.Author.ID] = append(r.contentsByAuthor[content.Author.ID], *content)
 
-	// Добавляем в общий список
 	r.allContent = append(r.allContent, *content)
 }
 
@@ -230,7 +225,6 @@ func (s *TestMediaStorage) Save(ctx context.Context, contentId uuid.UUID, files 
 
 	s.savedFiles[contentId] = files
 
-	// Генерируем тестовые URL
 	urls := make([]string, len(files))
 	for i := range files {
 		urls[i] = "/uploads/content/" + contentId.String() + "/file" + string(rune(i)) + ".jpg"
@@ -308,17 +302,14 @@ func TestContentService_Create(t *testing.T) {
 			t.Errorf("Create() error = %v", err)
 		}
 
-		// Проверяем что Create был вызван
 		if !repo.WasCalled("Create") {
 			t.Error("Create() не был вызван в репозитории")
 		}
 
-		// Проверяем что вернулся корректный UUID
 		if contentID == uuid.Nil {
 			t.Error("Create() должен вернуть не-nil UUID")
 		}
 
-		// Проверяем что контент был создан
 		if len(repo.createdContent) != 1 {
 			t.Errorf("Создано %d контента, ожидалось 1", len(repo.createdContent))
 		}
@@ -517,7 +508,6 @@ func TestContentService_Delete(t *testing.T) {
 			t.Error("Delete() не был вызван в репозитории")
 		}
 
-		// Проверяем что контент помечен как удаленный
 		if len(repo.deletedContent) != 1 || repo.deletedContent[0] != content.ID {
 			t.Error("Контент не был помечен как удаленный")
 		}
@@ -584,12 +574,10 @@ func TestContentService_Update(t *testing.T) {
 			t.Error("Update() не был вызван в репозитории")
 		}
 
-		// Проверяем что старые медиа были удалены
 		if !mediaStorage.WasCalled("Delete") {
 			t.Error("Старые медиа файлы должны быть удалены")
 		}
 
-		// Проверяем что удалены старые URL
 		if len(mediaStorage.deletedURLs) != 1 || mediaStorage.deletedURLs[0] != "/uploads/image1.jpg" {
 			t.Error("Старые медиа URL не были удалены")
 		}
@@ -675,13 +663,11 @@ func TestContentService_UploadMedia(t *testing.T) {
 		authorId := uuid.New()
 		contentId := uuid.New()
 
-		// Создаем существующий контент
 		existingContent := createTestContentResponse(authorId)
 		existingContent.ID = contentId
 		existingContent.MediaURLs = []string{"/uploads/old.jpg"}
 		repo.AddContent(existingContent)
 
-		// Создаем тестовые файлы
 		files := []*multipart.FileHeader{
 			{},
 			{},
@@ -693,17 +679,14 @@ func TestContentService_UploadMedia(t *testing.T) {
 			t.Errorf("UploadMedia() error = %v", err)
 		}
 
-		// Проверка, что медиа был сохранён
 		if !mediaStorage.WasCalled("Save") {
 			t.Error("Save() не был вызван в mediaStorage")
 		}
 
-		// Проверка, что репозиторий был обновлён
 		if !repo.WasCalled("Update") {
 			t.Error("Update() не был вызван в репозитории")
 		}
 
-		// Проверка, что файлы переданеы
 		if len(mediaStorage.savedFiles[contentId]) != 2 {
 			t.Errorf("Сохранено %d файлов, ожидалось 2", len(mediaStorage.savedFiles[contentId]))
 		}
@@ -803,7 +786,6 @@ func TestContentService_Update_RepositoryError(t *testing.T) {
 
 	newDescription := "Updated description"
 
-	// Устанавливаем ошибку в репозитории
 	repo.SetError("Update", errors.New("database error"))
 
 	err := service.Update(context.Background(), &newDescription, nil, nil, content.ID, authorId)
@@ -830,10 +812,8 @@ func TestContentService_UploadMedia_RepositoryUpdateError(t *testing.T) {
 
 	files := []*multipart.FileHeader{{}}
 
-	// Сохраняем медиа успешно
 	mediaStorage.savedURLs[contentId] = []string{"/uploads/new.jpg"}
 
-	// Но обновление в репозитории падает
 	repo.SetError("Update", errors.New("update error"))
 
 	err := service.UploadMedia(ctx, contentId, authorId, files)
@@ -850,7 +830,6 @@ func TestContentService_Delete_RepositoryError(t *testing.T) {
 	content := createTestContentResponse(authorId)
 	repo.AddContent(content)
 
-	// Устанавливаем ошибку в репозитории для Delete
 	repo.SetError("Delete", errors.New("database error"))
 
 	err := service.Delete(context.Background(), content.ID, authorId)
@@ -869,7 +848,7 @@ func TestContentService_Update_EmptyMediaURLs(t *testing.T) {
 		content.MediaURLs = []string{"/uploads/existing.jpg"}
 		repo.AddContent(content)
 
-		emptyMediaURLs := []string{} // Пустой массив
+		emptyMediaURLs := []string{}
 
 		err := service.Update(context.Background(), nil, nil, &emptyMediaURLs, content.ID, authorId)
 
@@ -886,7 +865,6 @@ func TestContentService_Update_EmptyMediaURLs(t *testing.T) {
 		content.MediaURLs = []string{"/uploads/existing.jpg"}
 		repo.AddContent(content)
 
-		// nil mediaURLs - значит не обновляем медиа
 		err := service.Update(context.Background(), nil, nil, nil, content.ID, authorId)
 
 		assert.NoError(t, err)

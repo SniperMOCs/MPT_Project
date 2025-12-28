@@ -244,8 +244,6 @@ func createTestUserService(repo *TestUserRepository) *userService {
 	}
 }
 
-// Дополнительные тесты для увеличения покрытия
-
 func TestUserService_Create_EdgeCases(t *testing.T) {
 	t.Run("Ошибка при пустом пароле", func(t *testing.T) {
 		repo := NewTestUserRepository()
@@ -253,7 +251,7 @@ func TestUserService_Create_EdgeCases(t *testing.T) {
 
 		user := &User{
 			Username: "testuser",
-			Password: " ", // пустой пароль
+			Password: " ",
 		}
 
 		err := service.Create(context.Background(), user)
@@ -303,7 +301,6 @@ func TestUserService_Update_EdgeCases(t *testing.T) {
 		testUser := createTestUser()
 		repo.AddUser(testUser)
 
-		// Все поля пустые - не должно быть ошибки
 		err := service.Update(context.Background(), testUser.ID, "", "", "")
 		if err != nil {
 			t.Errorf("Update() с пустыми полями не должен возвращать ошибку: %v", err)
@@ -379,7 +376,6 @@ func TestUserService_UpdatePassword_EdgeCases(t *testing.T) {
 		testUser.Password = hashPassword("oldpassword")
 		repo.AddUser(testUser)
 
-		// Передаем очень длинный пароль, который вызовет ошибку bcrypt
 		longPassword := strings.Repeat("a", 100)
 		err := service.UpdatePassword(context.Background(), testUser.ID, "oldpassword", longPassword)
 		if err == nil {
@@ -481,7 +477,6 @@ func TestUserService_SearchByFullName_EdgeCases(t *testing.T) {
 		repo := NewTestUserRepository()
 		service := createTestUserService(repo)
 
-		// Добавляем тестовых пользователей
 		users := []*User{
 			{
 				ID:       uuid.New(),

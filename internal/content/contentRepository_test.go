@@ -32,7 +32,6 @@ func TestContentRepository_Create(t *testing.T) {
 			IsVisible:   true,
 		}
 
-		// Настраиваем ожидание SQL запроса
 		mock.ExpectQuery(`INSERT INTO contents`).
 			WithArgs(
 				content.ID,
@@ -191,7 +190,7 @@ func TestContentRepository_GetByID(t *testing.T) {
 			true,
 			authorID,
 			"testuser",
-			nil, // avatar_url = NULL
+			nil,
 		)
 
 		mock.ExpectQuery(`SELECT`).
@@ -481,7 +480,6 @@ func TestContentRepository_Update(t *testing.T) {
 
 		contentID := uuid.New()
 
-		// Никакого запроса не должно быть
 		err = repo.Update(ctx, nil, nil, nil, contentID)
 		assert.NoError(t, err)
 		assert.NoError(t, mock.ExpectationsWereMet())
@@ -670,7 +668,7 @@ func TestContentRepository_GetAll(t *testing.T) {
 			true,
 			uuid.New(),
 			"user2",
-			nil, // avatar_url может быть NULL
+			nil,
 		)
 
 		mock.ExpectQuery(`SELECT`).
@@ -681,7 +679,7 @@ func TestContentRepository_GetAll(t *testing.T) {
 		assert.Len(t, contents, 2)
 		assert.Equal(t, "Public post 1", contents[0].Description)
 		assert.Equal(t, "Public post 2", contents[1].Description)
-		assert.Nil(t, contents[1].Author.AvatarURL) // Проверяем NULL avatar_url
+		assert.Nil(t, contents[1].Author.AvatarURL)
 		assert.NoError(t, mock.ExpectationsWereMet())
 	})
 
@@ -742,20 +740,19 @@ func TestContentRepository_GetAll(t *testing.T) {
 			"Visible post",
 			pq.Array([]string{"/uploads/img1.jpg"}),
 			createdAt,
-			true, // Только видимые посты возвращаются в GetAll
+			true,
 			uuid.New(),
 			"user1",
 			"/uploads/avatar1.jpg",
 		)
 
-		// В запросе есть условие WHERE c.is_visible = true
 		mock.ExpectQuery(`SELECT.*WHERE c.is_visible = true`).
 			WillReturnRows(rows)
 
 		contents, err := repo.GetAll(ctx)
 		assert.NoError(t, err)
 		assert.Len(t, contents, 1)
-		assert.True(t, contents[0].IsVisible) // Должны быть только видимые посты
+		assert.True(t, contents[0].IsVisible)
 		assert.NoError(t, mock.ExpectationsWereMet())
 	})
 }

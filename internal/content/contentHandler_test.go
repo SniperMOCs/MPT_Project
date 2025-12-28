@@ -75,7 +75,6 @@ func (s *TestContentService) Create(ctx context.Context, description string, aut
 		AuthorId:    authorId,
 	})
 
-	// Создаем тестовый контент
 	contentID := uuid.New()
 	content := &ContentResponse{
 		ID:          contentID,
@@ -276,7 +275,6 @@ func TestContentHandler_Create(t *testing.T) {
 			t.Errorf("AuthorId = %v, ожидался %v", createdData.AuthorId, userId)
 		}
 
-		// Проверяем что вернулся UUID в ответе
 		var responseID uuid.UUID
 		err := json.NewDecoder(w.Body).Decode(&responseID)
 		if err != nil {
@@ -669,11 +667,9 @@ func TestContentHandler_UploadMedia(t *testing.T) {
 		}
 		service.AddContent(content)
 
-		// Создаем multipart запрос
 		body := &bytes.Buffer{}
 		writer := multipart.NewWriter(body)
 
-		// Добавляем файл
 		part, _ := writer.CreateFormFile("files", "test.jpg")
 		io.WriteString(part, "fake image content")
 		writer.Close()
@@ -706,7 +702,6 @@ func TestContentHandler_UploadMedia(t *testing.T) {
 		userId := uuid.New()
 		contentId := uuid.New()
 
-		// Создаем multipart запрос без файлов
 		body := &bytes.Buffer{}
 		writer := multipart.NewWriter(body)
 		writer.Close()
@@ -910,7 +905,6 @@ func TestContentHandler_UploadMedia_InvalidMultipart(t *testing.T) {
 	userID := uuid.New()
 	contentID := uuid.New()
 
-	// Не multipart запрос
 	req := httptest.NewRequest(http.MethodPost, "/api/content/media/"+contentID.String(),
 		strings.NewReader("not multipart"))
 	ctx := context.WithValue(req.Context(), contextkeys.UserIDKey, userID)
@@ -971,7 +965,6 @@ func TestContentHandler_UploadMedia_ServiceError(t *testing.T) {
 	}
 	service.AddContent(content)
 
-	// Создаем multipart запрос
 	body := &bytes.Buffer{}
 	writer := multipart.NewWriter(body)
 	part, _ := writer.CreateFormFile("files", "test.jpg")
@@ -999,10 +992,9 @@ func TestContentHandler_UploadMedia_NoFiles(t *testing.T) {
 	userID := uuid.New()
 	contentID := uuid.New()
 
-	// Создаем multipart запрос БЕЗ файлов
 	body := &bytes.Buffer{}
 	writer := multipart.NewWriter(body)
-	// Не добавляем файлы
+
 	writer.WriteField("other_field", "value")
 	writer.Close()
 
@@ -1018,7 +1010,6 @@ func TestContentHandler_UploadMedia_NoFiles(t *testing.T) {
 	assert.Contains(t, w.Body.String(), "no files provided")
 }
 
-// Вспомогательная функция для создания указателя на bool
 func boolPtr(b bool) *bool {
 	return &b
 }

@@ -342,7 +342,6 @@ func TestUserRepository_Update(t *testing.T) {
 	t.Run("Обновление без изменений", func(t *testing.T) {
 		userID := uuid.New()
 
-		// Не должно быть запроса к БД
 		err := repo.Update(context.Background(), userID, "", "", "")
 		if err != nil {
 			t.Errorf("Update() с пустыми полями не должен возвращать ошибку: %v", err)

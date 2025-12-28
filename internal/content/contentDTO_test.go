@@ -74,14 +74,13 @@ func TestContentDTO_JSON(t *testing.T) {
 			t.Errorf("Ошибка при десериализации JSON: %v", err)
 		}
 
-		// Проверяем что поля с omitempty отсутствуют
 		if _, ok := result["description"]; ok {
 			t.Error("Поле description не должно присутствовать в JSON")
 		}
 		if _, ok := result["is_visible"]; ok {
 			t.Error("Поле is_visible не должно присутствовать в JSON")
 		}
-		// media_urls не имеет omitempty, но пустой массив должен быть в JSON
+
 		if _, ok := result["media_urls"]; !ok {
 			t.Error("Поле media_urls должно присутствовать в JSON даже если пустое")
 		}

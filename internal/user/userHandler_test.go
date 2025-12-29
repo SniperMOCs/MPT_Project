@@ -472,3 +472,77 @@ func TestHandler_HandleSearchByFullName(t *testing.T) {
 		}
 	})
 }
+
+func TestHandler_HandleMe_WrongMethod(t *testing.T) {
+	handler := NewUserHandler(&TestService{})
+
+	methods := []string{http.MethodPost, http.MethodPut, http.MethodPatch, http.MethodDelete}
+
+	for _, method := range methods {
+		t.Run(method, func(t *testing.T) {
+			req := httptest.NewRequest(method, "/users/me", nil)
+			w := httptest.NewRecorder()
+
+			handler.HandleMe(w, req)
+
+			if w.Code != http.StatusMethodNotAllowed {
+				t.Errorf("HandleMe() с методом %s код = %v, ожидался %v", method, w.Code, http.StatusMethodNotAllowed)
+			}
+		})
+	}
+}
+
+func TestHandler_HandleUpdate_WrongMethod(t *testing.T) {
+	userID := uuid.New()
+	handler := NewUserHandler(&TestService{})
+
+	methods := []string{http.MethodGet, http.MethodPost, http.MethodPut, http.MethodDelete}
+
+	for _, method := range methods {
+		t.Run(method, func(t *testing.T) {
+			dto := UserDTO{Username: "newuser"}
+			body, _ := json.Marshal(dto)
+
+			req := httptest.NewRequest(method, "/users/update", bytes.NewReader(body))
+			req.Header.Set("Content-Type", "application/json")
+			ctx := context.WithValue(req.Context(), contextkeys.UserIDKey, userID)
+			req = req.WithContext(ctx)
+			w := httptest.NewRecorder()
+
+			handler.HandleUpdate(w, req)
+
+			if w.Code != http.StatusMethodNotAllowed {
+				t.Errorf("HandleUpdate() с методом %s код = %v, ожидался %v", method, w.Code, http.StatusMethodNotAllowed)
+			}
+		})
+	}
+}
+
+func TestHandler_HandleSetPassword_WrongMethod(t *testing.T) {
+	userID := uuid.New()
+	handler := NewUserHandler(&TestService{})
+
+	methods := []string{http.MethodGet, http.MethodPost, http.MethodPut, http.MethodDelete}
+
+	for _, method := range methods {
+		t.Run(method, func(t *testing.T) {
+			dto := UpdatePasswordDTO{
+				OldPassword: "old",
+				NewPassword: "new",
+			}
+			body, _ := json.Marshal(dto)
+
+			req := httptest.NewRequest(method, "/users/setPassword", bytes.NewReader(body))
+			req.Header.Set("Content-Type", "application/json")
+			ctx := context.WithValue(req.Context(), contextkeys.UserIDKey, userID)
+			req = req.WithContext(ctx)
+			w := httptest.NewRecorder()
+
+			handler.HandleSetPassword(w, req)
+
+			if w.Code != http.StatusMethodNotAllowed {
+				t.Errorf("HandleSetPassword() с методом %s код = %v, ожидался %v", method, w.Code, http.StatusMethodNotAllowed)
+			}
+		})
+	}
+}

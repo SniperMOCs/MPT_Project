@@ -16,30 +16,6 @@ import (
 	"github.com/google/uuid"
 )
 
-// Мок для тестов JWTManager
-type TestJWTManager struct {
-	validateResult *auth.Claims
-	validateErr    error
-}
-
-func NewTestJWTManager() *TestJWTManager {
-	return &TestJWTManager{}
-}
-
-func (j *TestJWTManager) GenerateToken(userID uuid.UUID, duration time.Duration) (string, error) {
-	return "test-token", nil
-}
-
-func (j *TestJWTManager) ValidateToken(tokenString string) (*auth.Claims, error) {
-	return j.validateResult, j.validateErr
-}
-
-func (j *TestJWTManager) SetValidateResult(claims *auth.Claims, err error) {
-	j.validateResult = claims
-	j.validateErr = err
-}
-
-// Мок для тестов NotificationService
 type TestNotificationService struct {
 	notifications     map[uuid.UUID][]NotificationResponse
 	unreadCounts      map[uuid.UUID]int
@@ -136,24 +112,19 @@ func (s *TestNotificationService) WasCalled(methodName string) bool {
 	return false
 }
 
-// Создание тестового хендлера
-func createTestHandler() (*TestNotificationService, *TestJWTManager, *WebSocketHub, *NotificationHandler) {
+func createTestHandler() (*TestNotificationService, *WebSocketHub, *NotificationHandler) {
 	service := NewTestNotificationService()
-	jwt := NewTestJWTManager()
 	hub := NewWebSocketHub()
+	jwtManager := auth.NewJWTManager([]byte("test-secret-key-for-tests"))
 
-	handler := &NotificationHandler{
-		service: service,
-		hub:     hub,
-	}
+	handler := NewNotificationHandler(service, hub, jwtManager)
 
-	return service, jwt, hub, handler
+	return service, hub, handler
 }
 
 func TestNotificationHandler_GetMy(t *testing.T) {
 	t.Run("Успешное получение уведомлений", func(t *testing.T) {
-		service, jwt, hub, handler := createTestHandler()
-		_ = jwt
+		service, hub, handler := createTestHandler()
 		_ = hub
 
 		userID := uuid.New()
@@ -200,8 +171,7 @@ func TestNotificationHandler_GetMy(t *testing.T) {
 	})
 
 	t.Run("Успешное получение пустого списка уведомлений", func(t *testing.T) {
-		service, jwt, hub, handler := createTestHandler()
-		_ = jwt
+		service, hub, handler := createTestHandler()
 		_ = hub
 
 		userID := uuid.New()
@@ -227,8 +197,7 @@ func TestNotificationHandler_GetMy(t *testing.T) {
 	})
 
 	t.Run("Неподдерживаемый метод HTTP", func(t *testing.T) {
-		service, jwt, hub, handler := createTestHandler()
-		_ = jwt
+		service, hub, handler := createTestHandler()
 		_ = hub
 
 		userID := uuid.New()
@@ -250,8 +219,7 @@ func TestNotificationHandler_GetMy(t *testing.T) {
 
 func TestNotificationHandler_MarkAsRead(t *testing.T) {
 	t.Run("Успешное помечание уведомлений как прочитанных", func(t *testing.T) {
-		service, jwt, hub, handler := createTestHandler()
-		_ = jwt
+		service, hub, handler := createTestHandler()
 		_ = hub
 
 		userID := uuid.New()
@@ -271,8 +239,7 @@ func TestNotificationHandler_MarkAsRead(t *testing.T) {
 	})
 
 	t.Run("Неподдерживаемый метод HTTP", func(t *testing.T) {
-		_, jwt, hub, handler := createTestHandler()
-		_ = jwt
+		_, hub, handler := createTestHandler()
 		_ = hub
 
 		userID := uuid.New()
@@ -291,8 +258,7 @@ func TestNotificationHandler_MarkAsRead(t *testing.T) {
 
 func TestNotificationHandler_GetUnreadCount(t *testing.T) {
 	t.Run("Успешное получение количества непрочитанных уведомлений", func(t *testing.T) {
-		service, jwt, hub, handler := createTestHandler()
-		_ = jwt
+		service, hub, handler := createTestHandler()
 		_ = hub
 
 		userID := uuid.New()
@@ -324,8 +290,7 @@ func TestNotificationHandler_GetUnreadCount(t *testing.T) {
 	})
 
 	t.Run("Успешное получение нулевого количества непрочитанных", func(t *testing.T) {
-		_, jwt, hub, handler := createTestHandler()
-		_ = jwt
+		_, hub, handler := createTestHandler()
 		_ = hub
 
 		userID := uuid.New()
@@ -351,8 +316,7 @@ func TestNotificationHandler_GetUnreadCount(t *testing.T) {
 	})
 
 	t.Run("Неподдерживаемый метод HTTP", func(t *testing.T) {
-		_, jwt, hub, handler := createTestHandler()
-		_ = jwt
+		_, hub, handler := createTestHandler()
 		_ = hub
 
 		userID := uuid.New()
@@ -372,7 +336,6 @@ func TestNotificationHandler_GetUnreadCount(t *testing.T) {
 func TestNotificationHandler_ServeWS(t *testing.T) {
 	t.Run("Создание нового хендлера", func(t *testing.T) {
 		service := NewTestNotificationService()
-		_ = NewTestJWTManager()
 		hub := NewWebSocketHub()
 
 		handler := &NotificationHandler{
@@ -395,7 +358,6 @@ func TestNotificationHandler_ServeWS(t *testing.T) {
 func TestNotificationHandler_New(t *testing.T) {
 	t.Run("Проверка создания хендлера", func(t *testing.T) {
 		service := NewTestNotificationService()
-		_ = NewTestJWTManager()
 
 		handler := &NotificationHandler{
 			service: service,
@@ -408,8 +370,7 @@ func TestNotificationHandler_New(t *testing.T) {
 
 func TestNotificationHandler_EmptyContext(t *testing.T) {
 	t.Run("Обработка запроса без UserID в контексте", func(t *testing.T) {
-		_, jwt, hub, handler := createTestHandler()
-		_ = jwt
+		_, hub, handler := createTestHandler()
 		_ = hub
 
 		req := httptest.NewRequest(http.MethodGet, "/notifications", nil)
@@ -428,8 +389,7 @@ func TestNotificationHandler_EmptyContext(t *testing.T) {
 
 func TestNotificationHandler_MultipleNotifications(t *testing.T) {
 	t.Run("Получение нескольких уведомлений с сортировкой по времени", func(t *testing.T) {
-		service, jwt, hub, handler := createTestHandler()
-		_ = jwt
+		service, hub, handler := createTestHandler()
 		_ = hub
 
 		userID := uuid.New()
@@ -514,8 +474,7 @@ func TestNotificationHandler_MultipleNotifications(t *testing.T) {
 
 func TestNotificationHandler_EmptyResponse(t *testing.T) {
 	t.Run("Тестирование пустых ответов для всех методов", func(t *testing.T) {
-		_, jwt, hub, handler := createTestHandler()
-		_ = jwt
+		_, hub, handler := createTestHandler()
 		_ = hub
 
 		userID := uuid.New()
@@ -554,8 +513,7 @@ func TestNotificationHandler_EmptyResponse(t *testing.T) {
 
 func TestNotificationHandler_ErrorHandling(t *testing.T) {
 	t.Run("GetMy с ошибкой сервиса", func(t *testing.T) {
-		service, jwt, hub, handler := createTestHandler()
-		_ = jwt
+		service, hub, handler := createTestHandler()
 		_ = hub
 
 		service.SetGetByRecipientError(errors.New("database error"))
@@ -580,8 +538,7 @@ func TestNotificationHandler_ErrorHandling(t *testing.T) {
 	})
 
 	t.Run("MarkAsRead с ошибкой сервиса", func(t *testing.T) {
-		service, jwt, hub, handler := createTestHandler()
-		_ = jwt
+		service, hub, handler := createTestHandler()
 		_ = hub
 
 		service.SetMarkAsReadError(errors.New("database error"))
@@ -606,8 +563,7 @@ func TestNotificationHandler_ErrorHandling(t *testing.T) {
 	})
 
 	t.Run("GetUnreadCount с ошибкой сервиса", func(t *testing.T) {
-		service, jwt, hub, handler := createTestHandler()
-		_ = jwt
+		service, hub, handler := createTestHandler()
 		_ = hub
 
 		service.SetGetUnreadCountError(errors.New("database error"))
@@ -633,22 +589,63 @@ func TestNotificationHandler_ErrorHandling(t *testing.T) {
 }
 
 func TestNotificationHandler_ServeWS_ErrorHandling(t *testing.T) {
-	t.Run("WebSocket Upgrade ошибка - возврат без паники", func(t *testing.T) {
-		_, jwt, hub, handler := createTestHandler()
-		_ = jwt
+	t.Run("Ошибка при отсутствии токена", func(t *testing.T) {
+		_, hub, handler := createTestHandler()
 		_ = hub
 
-		userID := uuid.New()
 		req := httptest.NewRequest("GET", "/ws/notifications", nil)
-		ctx := context.WithValue(req.Context(), contextKeys.UserIDKey, userID)
-		req = req.WithContext(ctx)
-
 		rr := httptest.NewRecorder()
 
 		handler.ServeWS(rr, req)
 
-		if rr.Code == 0 {
-			t.Error("ServeWS() должен установить код ответа при ошибке")
+		if rr.Code != http.StatusUnauthorized {
+			t.Errorf("ServeWS() без токена должен вернуть 401, got %d", rr.Code)
+		}
+
+		body := strings.TrimSpace(rr.Body.String())
+		expectedBody := "Unauthorized"
+		if body != expectedBody {
+			t.Errorf("ServeWS() без токена должен вернуть '%s', got '%s'", expectedBody, body)
+		}
+	})
+
+	t.Run("Ошибка при невалидном токене", func(t *testing.T) {
+		_, hub, handler := createTestHandler()
+		_ = hub
+
+		req := httptest.NewRequest("GET", "/ws/notifications?token=invalid-token", nil)
+		rr := httptest.NewRecorder()
+
+		handler.ServeWS(rr, req)
+
+		if rr.Code != http.StatusUnauthorized {
+			t.Errorf("ServeWS() с невалидным токеном должен вернуть 401, got %d", rr.Code)
+		}
+
+		body := strings.TrimSpace(rr.Body.String())
+		expectedBody := "unauthorized"
+		if body != expectedBody {
+			t.Errorf("ServeWS() с невалидным токеном должен вернуть '%s', got '%s'", expectedBody, body)
+		}
+	})
+
+	t.Run("Ошибка при пустом токене", func(t *testing.T) {
+		_, hub, handler := createTestHandler()
+		_ = hub
+
+		req := httptest.NewRequest("GET", "/ws/notifications?token=", nil)
+		rr := httptest.NewRecorder()
+
+		handler.ServeWS(rr, req)
+
+		if rr.Code != http.StatusUnauthorized {
+			t.Errorf("ServeWS() с пустым токеном должен вернуть 401, got %d", rr.Code)
+		}
+
+		body := strings.TrimSpace(rr.Body.String())
+		expectedBody := "Unauthorized"
+		if body != expectedBody {
+			t.Errorf("ServeWS() с пустым токеном должен вернуть '%s', got '%s'", expectedBody, body)
 		}
 	})
 }

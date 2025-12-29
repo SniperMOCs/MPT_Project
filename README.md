@@ -167,7 +167,269 @@ project/
 
 ## Тестирование
 
-toDO
+Проект содержит комплексное тестовое покрытие основных компонентов системы. Все тесты написаны с использованием стандартной библиотеки `testing` Go и дополнительных библиотек для моков и assertions.
+
+### Используемые библиотеки для тестирования
+
+- **testing** - стандартная библиотека Go для тестирования
+- **stretchr/testify/assert** - библиотека для удобных assertions
+- **stretchr/testify/mock** - библиотека для создания моков
+- **DATA-DOG/go-sqlmock** - библиотека для мокирования SQL запросов
+- **net/http/httptest** - стандартная библиотека для HTTP тестирования
+
+### Структура тестов
+
+Тесты организованы по модулям и следуют принципу "один файл тестов на один файл исходного кода". Файлы с тестами имеют суффикс `_test.go` и находятся в тех же пакетах, что и тестируемый код.
+
+```
+internal/
+├── user/
+│   ├── userService_test.go       # Тесты для бизнес-логики пользователей
+│   ├── userRepository_test.go    # Тесты для работы с БД (моки SQL)
+│   └── userHandler_test.go       # Тесты для HTTP handlers
+├── auth/
+│   ├── authService_test.go       # Тесты для логики аутентификации
+│   ├── authHandler_test.go       # Тесты для HTTP handlers авторизации
+│   ├── jwt_test.go               # Тесты для JWT токенов
+│   └── middleware_test.go        # Тесты для middleware
+├── content/
+│   ├── contentService_test.go
+│   ├── contentRepository_test.go
+│   └── contentHandler_test.go
+├── storage/
+│   ├── avatarStorage_test.go     # Тесты для работы с файлами аватаров
+│   └── mediaStorage_test.go      # Тесты для работы с медиа файлами
+└── ...
+```
+
+### Типы тестов
+
+#### 1. Тесты Services (Бизнес-логика)
+
+Тесты для сервисов проверяют бизнес-логику приложения. Используются моки репозиториев для изоляции от базы данных.
+
+**Пример структуры:**
+```go
+// Создание мока репозитория
+type TestUserRepository struct {
+    usersByID map[uuid.UUID]*User
+    // ...
+}
+
+// Тестирование сценариев
+func TestUserService_Create_EdgeCases(t *testing.T) {
+    t.Run("Ошибка при пустом пароле", func(t *testing.T) {
+        // Arrange
+        repo := NewTestUserRepository()
+        service := createTestUserService(repo)
+        
+        // Act
+        err := service.Create(context.Background(), user)
+        
+        // Assert
+        if err == nil {
+            t.Error("Create() должен вернуть ошибку")
+        }
+    })
+}
+```
+
+**Что тестируется:**
+- Валидация входных данных
+- Обработка ошибок репозитория
+- Бизнес-правила и логика
+- Edge cases (граничные случаи)
+
+#### 2. Тесты Repositories (Работа с БД)
+
+Тесты для репозиториев проверяют корректность SQL запросов. Используется `go-sqlmock` для мокирования базы данных.
+
+**Пример структуры:**
+```go
+func TestUserRepository_Create(t *testing.T) {
+    // Создание мока БД
+    db, mock, err := sqlmock.New()
+    defer db.Close()
+    
+    repo := NewUserRepository(db)
+    
+    t.Run("Успешное создание пользователя", func(t *testing.T) {
+        // Настройка ожиданий SQL запроса
+        mock.ExpectExec("INSERT INTO users").
+            WithArgs(userID, "testuser", "hashedpassword", createdAt).
+            WillReturnResult(sqlmock.NewResult(1, 1))
+        
+        // Выполнение операции
+        err := repo.Create(context.Background(), user)
+        
+        // Проверка выполнения ожиданий
+        if err := mock.ExpectationsWereMet(); err != nil {
+            t.Errorf("невыполненные ожидания: %v", err)
+        }
+    })
+}
+```
+
+**Что тестируется:**
+- Корректность SQL запросов
+- Передача параметров в запросы
+- Обработка ошибок БД
+- Правильная обработка результатов запросов
+
+#### 3. Тесты Handlers (HTTP endpoints)
+
+Тесты для handlers проверяют обработку HTTP запросов. Используется `httptest` для создания тестовых запросов и записи ответов.
+
+**Пример структуры:**
+```go
+func TestAuthHandler_Login_Success(t *testing.T) {
+    // Создание мока сервиса
+    testService := new(TestAuthService)
+    handler := NewAuthHandler(testService)
+    
+    // Настройка ожиданий
+    testService.On("Login", mock.Anything, "testuser", "password123").
+        Return("test.jwt.token", nil)
+    
+    // Создание тестового запроса
+    reqBody := map[string]string{
+        "username": "testuser",
+        "password": "password123",
+    }
+    body, _ := json.Marshal(reqBody)
+    req := httptest.NewRequest(http.MethodPost, "/login", bytes.NewReader(body))
+    req.Header.Set("Content-Type", "application/json")
+    w := httptest.NewRecorder()
+    
+    // Выполнение handler
+    handler.Login(w, req)
+    
+    // Проверка результата
+    assert.Equal(t, http.StatusOK, w.Code)
+    assert.Contains(t, w.Header().Get("Content-Type"), "application/json")
+    
+    // Проверка вызова моков
+    testService.AssertExpectations(t)
+}
+```
+
+**Что тестируется:**
+- HTTP статус коды ответов
+- Формат JSON ответов
+- Валидация входных данных
+- Обработка различных HTTP методов
+- Корректность вызова сервисов
+
+#### 4. Тесты Storage (Работа с файлами)
+
+Тесты для storage проверяют сохранение и чтение файлов. Используются временные директории для изоляции тестов.
+
+**Пример структуры:**
+```go
+func TestFileAvatarStorage_Save(t *testing.T) {
+    // Создание временной директории
+    tmpDir, err := os.MkdirTemp("", "avatar-storage-test-*")
+    defer os.RemoveAll(tmpDir)
+    
+    storage := NewAvatarStorage(tmpDir, "/uploads")
+    
+    // Тестирование сохранения
+    imageData := "fake image data"
+    reader := strings.NewReader(imageData)
+    
+    url, err := storage.Save(context.Background(), userID, reader)
+    // Проверка результата
+}
+```
+
+**Что тестируется:**
+- Сохранение файлов
+- Генерация путей к файлам
+- Обработка ошибок при работе с файловой системой
+
+### Запуск тестов
+
+#### Запуск всех тестов:
+```bash
+go test ./...
+```
+
+#### Запуск тестов конкретного пакета:
+```bash
+go test ./internal/user
+go test ./internal/auth
+```
+
+#### Запуск конкретного теста:
+```bash
+go test -run TestUserService_Create ./internal/user
+```
+
+#### Запуск с подробным выводом:
+```bash
+go test -v ./...
+```
+
+#### Запуск с покрытием кода:
+```bash
+go test -cover ./...
+```
+
+#### Генерация отчета о покрытии:
+```bash
+go test -coverprofile=coverage.out ./...
+go tool cover -html=coverage.out
+```
+
+#### Запуск тестов с таймаутом:
+```bash
+go test -timeout 30s ./...
+```
+
+### Стратегия тестирования
+
+1. **Unit тесты** - тестируют отдельные функции и методы в изоляции
+2. **Интеграционные тесты** - тестируют взаимодействие между компонентами (репозитории с БД через моки)
+3. **Handler тесты** - тестируют HTTP эндпоинты в изоляции от реальных сервисов
+
+### Покрытие кода
+
+Проект стремится к высокому покрытию тестами всех критических компонентов:
+- Services - проверка бизнес-логики
+- Repositories - проверка SQL запросов
+- Handlers - проверка HTTP обработки
+- Storage - проверка работы с файлами
+- JWT и middleware - проверка аутентификации и авторизации
+
+### Примеры тестовых сценариев
+
+#### Тестирование успешных сценариев
+- Создание пользователя с валидными данными
+- Успешный вход в систему
+- Получение данных пользователя
+- Обновление профиля
+
+#### Тестирование ошибок
+- Валидация входных данных (пустые поля, неверный формат)
+- Ошибки базы данных
+- Ошибки файловой системы
+- Неверные учетные данные
+- Отсутствие ресурсов (пользователь не найден)
+
+#### Тестирование граничных случаев
+- Пустые строки и nil значения
+- Максимальная длина полей
+- Специальные символы в строках
+- Дублирование данных (например, username)
+
+### Эффективность
+
+1. **Изоляция тестов** - каждый тест должен быть независимым
+2. **Моки для зависимостей** - использование моков для изоляции от внешних систем
+3. **Именование тестов** - понятные имена, описывающие тестируемый сценарий
+4. **Table-driven tests** - использование табличных тестов для множественных сценариев
+5. **Очистка ресурсов** - использование defer для очистки временных ресурсов
+6. **Проверка всех аспектов** - не только успешные сценарии, но и обработка ошибок
 
 ## Разработка
 

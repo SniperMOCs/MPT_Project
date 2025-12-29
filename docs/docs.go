@@ -1542,12 +1542,7 @@ const docTemplate = `{
         },
         "/ws/notifications": {
             "get": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Устанавливает WebSocket соединение для получения уведомлений в реальном времени. Требует заголовок Authorization: Bearer {token}",
+                "description": "Устанавливает WebSocket соединение для получения уведомлений в реальном времени.\nТокен передается в URL параметре 'token' (так как браузерные WebSocket не поддерживают кастомные заголовки).",
                 "consumes": [
                     "application/json"
                 ],
@@ -1561,9 +1556,9 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Bearer {token}",
-                        "name": "Authorization",
-                        "in": "header",
+                        "description": "JWT токен доступа",
+                        "name": "token",
+                        "in": "query",
                         "required": true
                     }
                 ],

@@ -2,6 +2,16 @@
 
 Backend-приложение на Go, реализующее функциональность социальной сети, аналогичной Instagram. Проект предоставляет REST API для управления пользователями, публикациями, комментариями, лайками, подписками и уведомлениями в реальном времени через WebSocket.
 
+## Команда
+
+- [Белей Егор](https://vk.com/snprmcs)
+- [Шевцов Данил](https://vk.com/l_rave_l)
+- [Субботин Кирилл](https://vk.com/id323489516)
+
+## Ссылки
+
+- [Frontend репозиторий](https://github.com/DeniedSaBUro/MPT_Project_frontend)
+
 ## Содержание
 
 - [Обзор](#обзор)
@@ -44,6 +54,11 @@ project/
 │   └── app/
 │       └── main.go              # Точка входа приложения
 │
+├── docs/                        # Сгенерированные файлы сваггера
+│   ├── docs.go                  # Настройки сваггера
+│   ├── swagger.json             # Спецификация (JSON)
+│   └── swagger.yaml             # Спецификация (YAML)
+│
 ├── internal/                    # Внутренние пакеты
 │   ├── auth/                    # Аутентификация и авторизация
 │   │   ├── authHandler.go       # HTTP обработчик
@@ -54,12 +69,15 @@ project/
 │   │   └── middleware.go        # Middleware для проверки токенов
 │   │
 │   ├── user/                    # Управление пользователями
-│   │   ├── userHandler.go       # HTTP обработчик
-│   │   ├── userService.go       # Бизнес-логика
-│   │   ├── userRepository.go    # Работа с БД
-│   │   ├── userModel.go         # Модель данных
-│   │   ├── userDTO.go           # Объект для передачи данных о регистрации пользователя
-│   │   └── updatePasswordDTO    # Объект для передачи данных о старом и новом пароле
+│   │   ├── userHandler.go                # HTTP обработчик
+│   │   ├── userService.go                # Бизнес-логика
+│   │   ├── userServiceInterface.go       # Методы бизнес-логики
+│   │   ├── userRepository.go             # Работа с БД
+│   │   ├── userRepositoryInterface.go    # Методы работы с БД
+│   │   ├── userModel.go                  # Модель данных
+│   │   ├── userDTO.go                    # Объект для передачи данных о регистрации пользователя
+│   │   ├── registerDTO.go                # Объект для отображения данных о пользователе
+│   │   └── updatePasswordDTO             # Объект для передачи данных о старом и новом пароле
 │   │
 │   ├── content/                 # Управление постами
 │   ├── comment/                 # Комментарии к постам
@@ -68,22 +86,31 @@ project/
 │   ├── notification/            # Уведомления
 │   │   └── webSocketHub.go      # Регистрация соединений и отправка сообщений через webSocket
 │   │
-│   ├── storage/                 # Работа с хранением файлов
-│   │   ├── avatarStorage.go     # Хранение аватаров
-│   │   └── mediaStorage.go      # Хранение медиа-файлов для постов
+│   ├── storage/                          # Работа с хранением файлов
+│   │   ├── avatarStorage.go              # Хранение аватаров
+│   │   ├── avatarStorageInterface.go     # Методы хранения аватаров
+│   │   ├── mediaStorageInterface.go      # Методы хранения медиа-файлов для постов
+│   │   └── mediaStorage.go               # Хранение медиа-файлов для постов
 │   │
 │   ├── config/                  # Конфигурация
+│   │   └── config.go            # Загрузка конфигурации с использованием .env
+│   │   
 │   ├── database/                # Работа с БД
 │   │   ├── database.go          # Подключение базы данных
 │   │   └── schema.sql           # SQL схема БД
 │   │
 │   ├── cors/                    # CORS настройки
-│   └── contextKeys/             # Контекстные ключи
+│   │   ├── CORShandler.go       # middleware для CORS
+│   │   └── enableCORS.sql       # Настройки конфигурации CORS
+│   │
+│   └── contextKeys/contextKeys.go        # Контекстные ключи
 │
 ├── uploads/                     # Загруженные файлы
 │   ├── avatars/                 # Аватары пользователей
 │   └── content/                 # Медиа постов
 │
+├── .env                         # Переменные среды
+├── .env.example                 # Пример переменных среды
 ├── go.mod                       # Зависимости Go
 ├── go.sum                       # Контрольные суммы зависимостей
 └── README.md                    # Документация
@@ -105,7 +132,7 @@ project/
 3. **Настройте базу данных PostgreSQL**:
    - Создайте базу данных:
      ```sql
-     CREATE DATABASE instagram_db;
+     CREATE DATABASE zapretgram_db;
      ```
    - Примените схему из `internal/database/schema.sql`
 
@@ -150,8 +177,8 @@ toDO
    - Handlers: `*Handler`
    - Services: `*Service`
    - Repositories: `*Repository`
-   - Models: структуры данных
-   - DTOs: `*DTO` для передачи данных
+   - Models: `*Model`
+   - DTOs: `*DTO`/`*Response`/`*Request`
 
 2. **Структура файлов в модуле**:
    - `*Handler.go` - HTTP обработчики
@@ -160,7 +187,7 @@ toDO
    - `*Repository.go` - работа с БД
    - `*RepositoryInterface.go` - интерфейс репозитория
    - `*Model.go` - модели данных
-   - `*DTO.go` - Data Transfer Objects
+   - `*DTO.go` - объекты для передачи или отображения данных
 
 3. **Обработка ошибок**:
    - Использование стандартных HTTP статусов

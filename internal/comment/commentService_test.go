@@ -279,18 +279,6 @@ func createTestCommentService(repo *TestCommentRepository, ns *TestNotificationS
 	}
 }
 
-func createTestComment() *Comment {
-	parentID := uuid.New()
-	return &Comment{
-		ID:        uuid.New(),
-		AuthorId:  uuid.New(),
-		ParentId:  &parentID,
-		ContentId: uuid.New(),
-		Text:      "Test comment",
-		CreatedAt: time.Now(),
-	}
-}
-
 func createTestCommentResponse() CommentResponse {
 	parentID := uuid.New()
 	avatarURL := "/uploads/avatar.jpg"

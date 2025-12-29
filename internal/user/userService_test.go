@@ -537,3 +537,31 @@ func TestUserService_GetByID_EdgeCases(t *testing.T) {
 		}
 	})
 }
+
+func TestUserService_Update_UsernameExists(t *testing.T) {
+	repo := NewTestUserRepository()
+	service := createTestUserService(repo)
+
+	user1 := &User{
+		ID:       uuid.New(),
+		Username: "user1",
+		Password: hashPassword("password1"),
+	}
+	user2 := &User{
+		ID:       uuid.New(),
+		Username: "user2",
+		Password: hashPassword("password2"),
+	}
+	repo.AddUser(user1)
+	repo.AddUser(user2)
+
+	t.Run("Обновление username на существующий", func(t *testing.T) {
+		err := service.Update(context.Background(), user1.ID, "user2", "", "")
+		if err == nil {
+			t.Error("Update() должен вернуть ошибку при занятом username")
+		}
+		if err.Error() != "username taken" {
+			t.Errorf("Update() ошибка = %v, ожидалось 'username taken'", err)
+		}
+	})
+}

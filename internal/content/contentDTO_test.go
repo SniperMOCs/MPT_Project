@@ -8,22 +8,25 @@ import (
 	"github.com/google/uuid"
 )
 
+// Сериализация ContentDTO
 func TestContentDTO_JSON(t *testing.T) {
 	t.Run("Сериализация ContentDTO", func(t *testing.T) {
 		dto := ContentDTO{
 			Description: "Test description",
 		}
 
+		//Сериализация в JSON
 		data, err := json.Marshal(dto)
 		if err != nil {
 			t.Errorf("Ошибка при сериализации ContentDTO: %v", err)
 		}
 
+		//Десериализация из JSON
 		var decoded ContentDTO
 		if err := json.Unmarshal(data, &decoded); err != nil {
 			t.Errorf("Ошибка при десериализации ContentDTO: %v", err)
 		}
-
+		//Сравнение Description и decoded.Description(Из JSON)
 		if decoded.Description != dto.Description {
 			t.Errorf("Description = %s, ожидался %s", decoded.Description, dto.Description)
 		}

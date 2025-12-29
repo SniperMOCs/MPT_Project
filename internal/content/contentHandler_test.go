@@ -871,7 +871,7 @@ func TestContentHandler_GetByID_ServiceError(t *testing.T) {
 	req := httptest.NewRequest(http.MethodGet, "/api/content/"+contentID.String(), nil)
 	w := httptest.NewRecorder()
 
-	service.SetError("GetByID", errors.New("database error"))
+	service.SetError("GetByID", errors.New("content not found"))
 
 	handler.GetByID(w, req)
 
